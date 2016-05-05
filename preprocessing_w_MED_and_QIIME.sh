@@ -1,5 +1,7 @@
 #!/bin/bash
 
+### WHOOOOOOO MELISSA IS DA BOMB
+
 # Input:
 # Single seq file for all sequences
 
