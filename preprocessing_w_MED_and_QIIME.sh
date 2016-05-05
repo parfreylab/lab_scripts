@@ -1,45 +1,47 @@
 #!/bin/bash
 
+# a script for processing raw 16s or 18s sequence data in fastq format into an OTU table, phylogenetic tree, and representative sequences
+# V 1.0 May 5th 2016
+# authors: Melissa Chen, Evan Morien
+
 # Input:
-# Single seq file for all sequences
+# Folder containing sequence files in .fastq or .fastq.gz format, path of mapping file, paths of database files, parameters for MED and QIIME to process sequence file
+# Output:
+# filtered OTU table with taxonomy added, representative sequences for each OTU, phylogenetic tree of sequences, various log files, other intermediate files from MED and QIIME
 
-
-# Requirements:
-# macqiime is installed 
-# fastx toolkit is installed
-# MED is installed
+# Requirements: #links good as of May 2016
+# QIIME or macqiime is installed http://qiime.org/
+# fastx toolkit is installed http://hannonlab.cshl.edu/fastx_toolkit/
+# MED is installed http://merenlab.org/2014/08/16/installing-the-oligotyping-pipeline/
 # folder with raw fastq files must not contain any non-fastq files
 
-
 #------------------------
-
-
 # SECTION ONE: Filepaths and parameters
-# This section prompts the user to specific a bunch of filepaths and parameters
+# This section prompts the user to specify necessary file paths and parameters
 # It also records their specifications in the log so they know exactly what they did
 # Last thing it does is count the seqs in each file prior to processing.
-
-
 #------------------------
-# Making Project directory. script will prompt user to type in a folder name and press enter. Then, we move inside the folder.
+# Making Project directory: script will prompt user to type in a folder name and press enter. Then, we move inside the folder.
 # All files will be created inside this directory. This means I don't need complete filepaths in order to do all commands.
 # First, there will be a series of questions to ask. These answers will specify the parameters you want.
-echo "Here is a list of the info you will need to enter. Collect all this and have it ready before running this script. If you don't have it, you can press ctrl+c to kill the script now.\n"
-echo "needed info: a name for your project (for the directory to be created)\nis the data 16s or 18s\ncomplete pathway to fastq files (just the folder, and they don't have to be unzipped if the aren't already)\n"
-echo "complete pathway to properly formatted mapping file\ncomplete pathways for the reference database rep set fasta, map of ref tree, and aligned rep set\n"
-echo "minimum substantive abundance (for MED nodes. see MED documentation. a good baseline is 100, but your dataset may require a lower number.)\n"
-echo "the trimming length for fastx toolkit (we ususally use 250)\n"
-echo "the tree building method. Valid choices are: clustalw, raxml_v730, muscle, fasttree, clearcut\n"
-echo "the minimum number of reads per OTU to include in final OTU table\n"
 
+echo "Here is a list of the info you will need to enter. Collect all this and have it ready before running this script. If you don't have it, you can press ctrl+c to kill the script now."
+echo "1. a name for your project (a directory named with the input here will be created in the folder you run the script in)"
+echo "2. is the data 16s or 18s"
+echo "3. complete pathway to fastq files (just the folder they are in. they don't have to be unzipped if the aren't already)"
+echo "4. complete filepath for properly formatted mapping file"
+echo "5. complete filepaths for the reference database rep set fasta, map of ref tree, and aligned rep set"
+echo "6. minimum substantive abundance (numeric. the -M paramteter for MED. a good baseline is 100, but your dataset may require a lower number. see MED documentation for additional details.)"
+echo "7. the trimming length for fastx toolkit (we ususally use 250)"
+echo "8. the tree building method. Valid choices are: clustalw, raxml_v730, muscle, fasttree, clearcut"
+echo "9. the minimum number of reads per OTU to include in final OTU table\n\n"
 
-
-echo "Please enter project name\n"
+echo "Please enter project name"
 	read projectname
 	mkdir "$projectname"
 	cd "$projectname"
 	
-echo "Is this 16s or 18s? [type 16 or 18]\n"
+echo "Is this 16s or 18s? [type 16 or 18]"
 	read projecttype
 	
 # Now, we are in the project directory.
@@ -86,33 +88,33 @@ echo "Reftreefasta: $reftreefasta\nReftreemap: $reftreemap\nReftreealigned: $ref
 # Enter the minimum entropy. This is the only variable in this script that changes for MED (Minimum Entropy Decomposition)
 
 echo "Enter Minimum Substantive Abundance (for MED, see MED documentation for additional details) -- the default is total reads divided by 5000.\n"
-	read minimumentropy
+read minimumentropy
 echo "minimum substantive abundance: $minimumentropy\n" >> LOG
 
 	
 # Enter the trimming length for fastx_clipper and fastx_trimmer.
 echo "Enter trimming length for reads\n"
-	read trimlength
+read trimlength
 	
 # Enter Tree building method. Fasttree is fast and the default; raxml seems to be more popular. Although, I've read somewhere they're about the same?
 echo "Enter tree building method. Method for tree building. Valid choices are: clustalw, raxml_v730, muscle, fasttree, clearcut\n"
-	read treemethod
+read treemethod
 	
 # Enter the minimum count. This is for filtering the OTU table.
 echo "Enter minimum number of reads per OTU to include in final OTU table\n"
-	read minimumcount
+read minimumcount
 echo "trimlength: $trimlength\nminimum entropy: $minimumentropy\nTree method: $treemethod\nMinimumcountfraction: $minimumcount\n" >> LOG
 
 # COPYING files over and unzipping them
 echo "Copying fasta files...\n"
-	mkdir ./seq_fasta/
-	cp "$fastqlocation"/*fq.gz ./seq_fasta/
-	cp "$fastqlocation"/*fastq* ./seq_fasta/
+mkdir ./seq_fasta/
+cp "$fastqlocation"/*fq.gz ./seq_fasta/
+cp "$fastqlocation"/*fastq* ./seq_fasta/
 	
 echo "Unzipping if necessary\n"
 for f in ./seq_fasta/*.gz; do
-	echo "unzipping file: $f ... \n"
-	gunzip "$f"
+    echo "unzipping file: $f ... \n"
+    gunzip "$f"
 done
 
 # Printing preamble for LOG. The LOG file will contain intermediate summaries for use of troubleshooting.
@@ -126,23 +128,16 @@ echo "\n" >> LOG
 # Counting sequences for each sample prior to processing. 
 # First, we go into the raw-fastq file. Then, for 'file' that ends in fastq, 
 # Print the name of the file and then print the count of ">" in that file (aka number of sequence of reads in file)
-
-
 # echo "RAW SEQUENCE COUNTS" >> LOG
-
 # echo "seq_fasta" | tee -a ./LOG | grep -c ">" "seq_fasta" >> LOG
-
 # echo " " >> LOG
 
-
 # We are now in $projectname directory again
-
-
 
 # Quality filtering of raw fastq files using parameters of $qthreshold.
 # This section goes through all files separately and filters through quality threshold. 
 # The reason we do this separately is because quality_filtered_fastq only operates on fastq files.
-# After combining all files with multiple split libraries, the format becomes a regular FNA file and quality_filtered_fastq doesn't like that.
+# After combining all files with multiple split libraries, the format becomes a regular FNA (fasta) file.
 
 
 echo "Starting Quality Filtering...\n"
@@ -155,9 +150,9 @@ echo "\n" >> ../LOG
 echo "PRE-QUALITY FILTER SEQUENCE COUNT\n" >> ../LOG
 
 for f in *R1*; do
-	fastq_quality_filter -i "$f" -q 19 -p 99 -o ../Quality_Filtered_Fastq/"$f"
-	echo "$f" | tee -a ../LOG | grep -c ">" "$f" >> ../LOG
-	echo "\n"
+    fastq_quality_filter -i "$f" -q 19 -p 99 -o ../Quality_Filtered_Fastq/"$f"
+    echo "$f" | tee -a ../LOG | grep -c ">" "$f" >> ../LOG
+    echo "\n"
 done
 
 cd ..
@@ -178,8 +173,8 @@ echo "q=$qthreshold\n" >> LOG
 
 cd Quality_Filtered_Fastq
 for f in *R1*; do
-	echo "$f" | tee -a ../LOG | grep -c ">" "$f" >> ../LOG
-	echo "\n"
+    echo "$f" | tee -a ../LOG | grep -c ">" "$f" >> ../LOG
+    echo "\n"
 done
 cd ..
 # in $projectname directory again
@@ -197,33 +192,21 @@ echo "Quality Filtering Complete\n"
 # The sample ID indicator means that the stuff before this part will act as the new ID name.
 
 if [ "$projecttype" == 18 ]
-	then
-	
-
-	multiple_split_libraries_fastq.py -i ./Quality_Filtered_Fastq -o multiple_split_libraries_fastq --demultiplexing_method samplid_by_file --phred_quality_threshold 19
-
-	# Output should yield histograms.txt; log; seqs.fna; split_library_log.txt
-
-	echo "multiple_split_libraries script finished...\n"
-
-	# Still in 'home' directory
-
+then  
+    multiple_split_libraries_fastq.py -i ./Quality_Filtered_Fastq -o multiple_split_libraries_fastq --demultiplexing_method samplid_by_file --phred_quality_threshold 19
+    # Output should yield histograms.txt; log; seqs.fna; split_library_log.txt
+    echo "multiple_split_libraries script finished...\n"
+    # Still in 'home' directory
 fi
 
 ###############
 
-
 if [ "$projecttype" == 16 ]
-	then
-	
-	ourindex=`ls ./seq_fasta/ | grep -v *R1* | grep -v *R2*`
-	
-	echo "preparing sequences with QIIME..."	
-	
-	split_libraries_fastq.py -f ./Quality_Filtered_Fastq/*R1* -o multiple_split_libraries_fastq --barcode_read_fps "$ourindex" --mapping_fps "$mappingfile" --phred_quality_threshold 19 --barcode_type 12
-	
-	echo "split_libraries_fastq script finished..."
-	
+then
+    ourindex=`ls ./seq_fasta/ | grep -v *R1* | grep -v *R2*` #get the name of the index file
+    echo "preparing sequences with QIIME..."	
+    split_libraries_fastq.py -f ./Quality_Filtered_Fastq/*R1* -o multiple_split_libraries_fastq --barcode_read_fps "$ourindex" --mapping_fps "$mappingfile" --phred_quality_threshold 19 --barcode_type 12
+    echo "split_libraries_fastq script finished..."
 fi
 
 # Trimming files to $trimlength bp using fastx.
