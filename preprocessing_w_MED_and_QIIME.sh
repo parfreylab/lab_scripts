@@ -37,21 +37,20 @@ echo "8. the tree building method. Valid choices are: clustalw, raxml_v730, musc
 echo "9. the minimum number of reads per OTU to include in final OTU table\n\n"
 
 echo "Please enter project name"
-	read projectname
-	mkdir "$projectname"
-	cd "$projectname"
-	
-echo "Is this 16s or 18s? [type 16 or 18]"
-	read projecttype
-	
+read projectname
+mkdir "$projectname"
+cd "$projectname"
 # Now, we are in the project directory.
+
+echo "Is this 16s or 18s? [type 16 or 18]"
+read projecttype
 
 # Copying raw data from folder and putting it in $projectname folder.
 # I wanted to copy it because then you can't mess up your raw data. Just in case!
 # cat is used so I'm not tampering with original file.
 
-echo "Enter complete pathway to raw fastq files.\n"
-	read fastqlocation
+echo "Enter complete pathway to raw fastq files."
+read fastqlocation
 
 	
 # You should end up with a folder called "raw_fastq" inside your project directory.
@@ -59,41 +58,38 @@ echo "Enter complete pathway to raw fastq files.\n"
 # I used the SILVA111 database for this, but other databases can be used as well.
 # I'm also copying these variables into the LOG file so we know what we used in the past if we need to go back.
 
-echo "Enter complete pathway to mapping file (txt)\n"
-	read mappingfile
-	
-echo "Mappingfile\n" >> LOG
+echo "Enter complete pathway to mapping file (txt)"
+read mappingfile
 
-echo "$mappingfile\n" >> LOG
-echo "\n" >> LOG
+echo "Mappingfile: $mappingfile" >> LOG
+echo "\n\n" >> LOG
 	
 	
-echo "Enter complete pathway to database rep set (fasta)\n"
-	read reftreefasta
-echo "Enter complete pathway to map of ref tree (txt)\n"
-	read reftreemap
-echo "Enter complete pathway to aligned rep set (fasta)\n"
-	read reftreealigned
+echo "Enter complete pathway to database rep set (fasta)"
+read reftreefasta
+echo "Enter complete pathway to map of ref tree (txt)"
+read reftreemap
+echo "Enter complete pathway to aligned rep set (fasta)"
+read reftreealigned
 	
 	
 	
-echo "\n" >> LOG
-echo "Input information: complete pathways to reference database\n" >> LOG
-echo "\n" >> LOG
+echo "\n\n" >> LOG
+echo "Input information: complete pathways to reference database" >> LOG
 
-echo "Reftreefasta: $reftreefasta\nReftreemap: $reftreemap\nReftreealigned: $reftreealigned\n" >> LOG
+echo "Reftreefasta: $reftreefasta\nReftreemap: $reftreemap\nReftreealigned: $reftreealigned\n\n" >> LOG
 
 # Now, we enter some parameters and variables. There is a prompt first, and then the user may type in their conplete filepath.
 
 # Enter the minimum entropy. This is the only variable in this script that changes for MED (Minimum Entropy Decomposition)
 
-echo "Enter Minimum Substantive Abundance (for MED, see MED documentation for additional details) -- the default is total reads divided by 5000.\n"
+echo "Enter Minimum Substantive Abundance (for MED, see MED documentation for additional details) -- the default is total reads divided by 5000."
 read minimumentropy
 echo "minimum substantive abundance: $minimumentropy\n" >> LOG
 
 	
 # Enter the trimming length for fastx_clipper and fastx_trimmer.
-echo "Enter trimming length for reads\n"
+echo "Enter trimming length for reads"
 read trimlength
 	
 # Enter Tree building method. Fasttree is fast and the default; raxml seems to be more popular. Although, I've read somewhere they're about the same?
@@ -212,20 +208,16 @@ fi
 # Trimming files to $trimlength bp using fastx.
 
 mkdir Trimmed_Quality_Filtered_MSL
-
 cd multiple_split_libraries_fastq
 
 # Using the $trimlength inputted before, use fastx trimmer to trip the seq file from multiple split libraries.
 
 fastx_trimmer -l "$trimlength" -i seqs.fna | fastx_clipper -l "$trimlength" -o -o ./Trimmed_Quality_Filtered_MSL/seqs_trim_clip.fna
-
-echo "Trimming/Clipping Complete\n"
-
-echo "\n" >> LOG
-echo "POST-FASTX SEQUENCE COUNT\n" >> LOG
-echo "\n" >> LOG
+echo "Trimming/Clipping Complete"
+echo "\n\n" >> LOG
 
 # Counting sequences
+echo "POST-FASTX SEQUENCE COUNT" >> LOG
 echo "seqs_trim_clip.fna sequence count\n" | tee -a LOG
 grep -c ">" ./Trimmed_Quality_Filtered_MSL/seqs_trim_clip.fna | tee -a LOG
 echo "\n" >> LOG
