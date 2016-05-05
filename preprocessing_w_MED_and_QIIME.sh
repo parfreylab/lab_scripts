@@ -1,16 +1,13 @@
 #!/bin/bash
 
-<<<<<<< HEAD
 ### WHOOOOOOO MELISSA IS DA BOMB
 
 # Input:
 # Single seq file for all sequences
 
-=======
 # a script for processing raw 16s or 18s sequence data in fastq format into an OTU table, phylogenetic tree, and representative sequences
 # V 1.0 May 5th 2016
 # authors: Melissa Chen, Evan Morien
->>>>>>> 0c44c630fdbad9975cd2591357725c56207f3cb3
 
 # Input:
 # Folder containing sequence files in .fastq or .fastq.gz format, path of mapping file, paths of database files, parameters for MED and QIIME to process sequence file
