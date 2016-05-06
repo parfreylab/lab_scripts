@@ -36,10 +36,10 @@ echo "2. is the data 16s or 18s"
 echo "3. complete pathway to fastq files (just the folder they are in. they don't have to be unzipped if the aren't already)"
 echo "4. complete filepath for properly formatted mapping file"
 echo "5. complete filepaths for the reference database rep set fasta, map of ref tree, and aligned rep set"
-echo "6. minimum substantive abundance (numeric. the -M paramteter for MED. a good baseline is 100, but your dataset may require a lower number. see MED documentation for additional details.)"
-echo "7. the trimming length for fastx toolkit (we ususally use 250)"
-echo "8. the tree building method. Valid choices are: clustalw, raxml_v730, muscle, fasttree, clearcut"
-echo "9. the minimum number of reads per OTU to include in final OTU table\n\n"
+echo "6. the trimming length for fastx toolkit (we ususally use 250)"
+echo "7. the tree building method. Valid choices are: clustalw, raxml_v730, muscle, fasttree, clearcut"
+echo "8. the minimum number of reads per OTU to include in final OTU table"
+echo "9. INPUT PROMPT COMES LATER: minimum substantive abundance (numeric. the -M paramteter for MED. a good baseline is 100, but your dataset may require a lower number. see MED documentation for additional details.)"
 
 echo "Please enter project name"
 read projectname
@@ -67,22 +67,25 @@ echo "Enter complete pathway to mapping file (txt)"
 read mappingfile
 
 echo "Mappingfile: $mappingfile" >> LOG
-echo "\n\n" >> LOG
+echo "" >> LOG
 	
 	
 echo "Enter complete pathway to database rep set (fasta)"
 read reftreefasta
-echo "Enter complete pathway to map of ref tree (txt)"
+echo "Enter complete pathway to reference taxonomy (txt)"
 read reftreemap
 echo "Enter complete pathway to aligned rep set (fasta)"
 read reftreealigned
 	
 	
 	
-echo "\n\n" >> LOG
+echo "" >> LOG
 echo "Input information: complete pathways to reference database" >> LOG
 
-echo "Reftreefasta: $reftreefasta\nReftreemap: $reftreemap\nReftreealigned: $reftreealigned\n\n" >> LOG
+echo "Reftreefasta: $reftreefasta" >> LOG
+echo "Reftreemap: $reftreemap" >> LOG
+echo "Reftreealigned: $reftreealigned" >> LOG
+echo "" >> LOG
 
 # Now, we enter some parameters and variables. There is a prompt first, and then the user may type in their conplete filepath.
 
@@ -90,7 +93,8 @@ echo "Reftreefasta: $reftreefasta\nReftreemap: $reftreemap\nReftreealigned: $ref
 
 echo "Enter Minimum Substantive Abundance (for MED, see MED documentation for additional details) -- the default is total reads divided by 5000."
 read minimumentropy
-echo "minimum substantive abundance: $minimumentropy\n" >> LOG
+echo "minimum substantive abundance: $minimumentropy" >> LOG
+echo "" >> LOG
 
 	
 # Enter the trimming length for fastx_clipper and fastx_trimmer.
@@ -98,89 +102,38 @@ echo "Enter trimming length for reads"
 read trimlength
 	
 # Enter Tree building method. Fasttree is fast and the default; raxml seems to be more popular. Although, I've read somewhere they're about the same?
-echo "Enter tree building method. Method for tree building. Valid choices are: clustalw, raxml_v730, muscle, fasttree, clearcut\n"
+echo "Enter tree building method. Method for tree building. Valid choices are: clustalw, raxml_v730, muscle, fasttree, clearcut"
 read treemethod
 	
 # Enter the minimum count. This is for filtering the OTU table.
-echo "Enter minimum number of reads per OTU to include in final OTU table\n"
+echo "Enter minimum number of reads per OTU to include in final OTU table"
 read minimumcount
-echo "trimlength: $trimlength\nminimum entropy: $minimumentropy\nTree method: $treemethod\nMinimumcountfraction: $minimumcount\n" >> LOG
+echo "trimlength: $trimlength" >> LOG
+echo "minimum entropy: $minimumentropy" >> LOG
+echo "Tree method: $treemethod" >> LOG
+echo "Minimumcountfraction: $minimumcount" >> LOG
+echo "" >> LOG
 
 # COPYING files over and unzipping them
-echo "Copying fasta files...\n"
+echo "Copying fasta files..."
 mkdir ./seq_fasta/
-cp "$fastqlocation"/*fq.gz ./seq_fasta/
+cp "$fastqlocation"/*fq* ./seq_fasta/
 cp "$fastqlocation"/*fastq* ./seq_fasta/
+
+# TODO: wrap each copy command in if statement that only executes if file in question exists
 	
-echo "Unzipping if necessary\n"
+echo "Unzipping if necessary"
 for f in ./seq_fasta/*.gz; do
-    echo "unzipping file: $f ... \n"
+    echo "unzipping file: $f ... "
     gunzip "$f"
 done
 
 # Printing preamble for LOG. The LOG file will contain intermediate summaries for use of troubleshooting.
-echo "\n" >> LOG
-echo "Log and script summaries for $projectname\n" >> LOG
-echo "\n" >> LOG
+echo "" >> LOG
+echo "Log and script summaries for $projectname" >> LOG
+echo "" >> LOG
 	
 # Note that all other parameters are default.
-
-
-# Counting sequences for each sample prior to processing. 
-# First, we go into the raw-fastq file. Then, for 'file' that ends in fastq, 
-# Print the name of the file and then print the count of ">" in that file (aka number of sequence of reads in file)
-# echo "RAW SEQUENCE COUNTS" >> LOG
-# echo "seq_fasta" | tee -a ./LOG | grep -c ">" "seq_fasta" >> LOG
-# echo " " >> LOG
-
-# We are now in $projectname directory again
-
-# Quality filtering of raw fastq files using parameters of $qthreshold.
-# This section goes through all files separately and filters through quality threshold. 
-# The reason we do this separately is because quality_filtered_fastq only operates on fastq files.
-# After combining all files with multiple split libraries, the format becomes a regular FNA (fasta) file.
-
-
-echo "Starting Quality Filtering...\n"
-
-mkdir Quality_Filtered_Fastq
-
-cd ./seq_fasta
-
-echo "\n" >> ../LOG
-echo "PRE-QUALITY FILTER SEQUENCE COUNT\n" >> ../LOG
-
-for f in *R1*; do
-    fastq_quality_filter -i "$f" -q 19 -p 99 -o ../Quality_Filtered_Fastq/"$f"
-    echo "$f" | tee -a ../LOG | grep -c ">" "$f" >> ../LOG
-    echo "\n"
-done
-
-cd ..
-# in Home
-
-# Get rid of all copied fasts
-rm -rf ./seq_fasta
-
-
-# Now, recounting number of sequences after quality filtering
-
-echo "\n" >> LOG
-echo "POST-QUALITY FILTER SEQUENCE COUNT\n" >> LOG
-echo "q=$qthreshold\n" >> LOG
-
-
-# This prints the filename of each sample, then uses that name to count the reads in each file.
-
-cd Quality_Filtered_Fastq
-for f in *R1*; do
-    echo "$f" | tee -a ../LOG | grep -c ">" "$f" >> ../LOG
-    echo "\n"
-done
-cd ..
-# in $projectname directory again
-
-echo "Quality Filtering Complete\n"
 
 #------------------------
 
@@ -190,13 +143,18 @@ echo "Quality Filtering Complete\n"
 # 	min_per_read_length_fraction: 0.75
 #	sequence_max_n:0
 # etc
+# we set the phred quality threshold to 19, if you want to change it, you can do so below. this shouldn't be necessary, 19 is pretty standard.
 # The sample ID indicator means that the stuff before this part will act as the new ID name.
 
+echo "Running split_libraries QIIME script..."
+
 if [ "$projecttype" == 18 ]
-then  
-    multiple_split_libraries_fastq.py -i ./Quality_Filtered_Fastq -o multiple_split_libraries_fastq --demultiplexing_method samplid_by_file --phred_quality_threshold 19
+then
+    touch parameters_mult_split_libraries.txt
+    echo "split_libraries_fastq:phred_quality_threshold 19" >> parameters_mult_split_libraries.txt
+    multiple_split_libraries_fastq.py -i ./seq_fasta -o multiple_split_libraries_fastq --demultiplexing_method sampleid_by_file -p parameters_mult_split_libraries.txt
     # Output should yield histograms.txt; log; seqs.fna; split_library_log.txt
-    echo "multiple_split_libraries script finished...\n"
+    echo "multiple_split_libraries script finished..."
     # Still in 'home' directory
 fi
 
@@ -206,7 +164,7 @@ if [ "$projecttype" == 16 ]
 then
     ourindex=`ls ./seq_fasta/ | grep -v *R1* | grep -v *R2*` #get the name of the index file
     echo "preparing sequences with QIIME..."	
-    split_libraries_fastq.py -f ./Quality_Filtered_Fastq/*R1* -o multiple_split_libraries_fastq --barcode_read_fps "$ourindex" --mapping_fps "$mappingfile" --phred_quality_threshold 19 --barcode_type 12
+    split_libraries_fastq.py -f ./seq_fasta/*R1* -o multiple_split_libraries_fastq --barcode_read_fps "$ourindex" --mapping_fps "$mappingfile" --phred_quality_threshold 19 --barcode_type 12
     echo "split_libraries_fastq script finished..."
 fi
 
@@ -216,17 +174,18 @@ mkdir Trimmed_Quality_Filtered_MSL
 cd multiple_split_libraries_fastq
 
 # Using the $trimlength inputted before, use fastx trimmer to trip the seq file from multiple split libraries.
-
-fastx_trimmer -l "$trimlength" -i seqs.fna | fastx_clipper -l "$trimlength" -o -o ./Trimmed_Quality_Filtered_MSL/seqs_trim_clip.fna
+echo "Trimming and clipping seqeunces using fastx..."
+fastx_trimmer -l "$trimlength" -i seqs.fna | fastx_clipper -l "$trimlength" -o ../Trimmed_Quality_Filtered_MSL/seqs_trim_clip.fna
 echo "Trimming/Clipping Complete"
-echo "\n\n" >> LOG
+echo "" >> ../LOG
 
 # Counting sequences
-echo "POST-FASTX SEQUENCE COUNT" >> LOG
-echo "seqs_trim_clip.fna sequence count\n" | tee -a LOG
-grep -c ">" ./Trimmed_Quality_Filtered_MSL/seqs_trim_clip.fna | tee -a LOG
-echo "\n" >> LOG
-
+echo "POST-FASTX SEQUENCE COUNT" >> ../LOG
+echo "seqs_trim_clip.fna sequence count" | tee -a ../LOG
+grep -c ">" ../Trimmed_Quality_Filtered_MSL/seqs_trim_clip.fna | tee -a ../LOG
+echo "" >> ../LOG
+#back to project home dir
+cd ..
 #------------------------
 
 # In home directory.
@@ -240,12 +199,22 @@ echo "\n" >> LOG
 # In order to prep the sequence headers for MED, we want to get rid of everything after the first space, and add "Read" before the read number
 
 cd ./Trimmed_Quality_Filtered_MSL
-
+echo "Prepping fasta headers for MED..."
 cat seqs_trim_clip.fna | awk -F' ' '{ st = index($0," ");print $1}' | awk -F_ '{ print ($2!="" ? $1"_Read"$2 : $1) }' > seqs_MED.fna
+echo "done!"
+# TODO: the "Read" part of the above string is actually not mandatory, but this wasn't known at the time the script was written. Currently this has no effect on the output, so it's not a high priority. Should be fixed eventually.
 # the command above splits each line on " " and then returns the first element only, then splits that first element on _ and returns both but adds "_Read" between them. 
 # it doesn't modify the sequence lines since they don't satisfy any of the splitting criteria, and the insertion in the second part of the command is conditional on a second element existing
 
+#checking output fasta for correctly formatted headers and dumping output to LOG file for review
+echo "Recording sample and read counts in LOG file..."
+echo "SAMPLE AND READ COUNTS FOR MED" >> ../LOG
+o-get-sample-info-from-fasta seqs_MED.fna >> ../LOG
+echo "" >> ../LOG
+echo "done!"
+
 # Cleaning up and moving output to its own directory
+echo "Cleaning up workspace..."
 rm seqs_trim_clip.fna
 mkdir ../MED
 mv seqs_MED.fna ../MED/seqs_MED.fna
@@ -265,17 +234,17 @@ cd ..
 
 # Now, decompose fasta file. This is a single line.
 
-echo "MED is decomposing fasta file...\n"
+echo "MED is decomposing fasta file..."
 
 decompose ./MED/seqs_MED.fna -M "$minimumentropy" --gen-html -o ./MED/decompose-$minimumentropy
 
-echo "MED run completed\n"
+echo "MED run completed!"
 
 # After decomposition, we need to transpose the MATRIX-COUNT.txt file because it is in the wrong format.
 # I was too lazy to write my own script for transposing so I copied one from stackoverflow and tested it before including it below
 # This part of the script was copy and pasted from stackoverflow
 
-echo "Transposing MATRIX_COUNT.txt...\n"
+echo "Transposing MATRIX_COUNT.txt..."
 awk '
 { 
     for (i=1; i<=NF; i++)  {
@@ -297,16 +266,17 @@ END {
 
 sed 's/samples/#OTU ID/g' MATRIX-COUNT_tmp.txt > MATRIX-COUNT_transposed.txt
 
-rm MATRIX-COUNT_transposed_temp.txt 	# Deletes intermediate file
-rm ./Trimmed_Quality_Filtered_MSL/MED/seqs_MED.fna
+rm MATRIX-COUNT_tmp.txt # Deletes intermediate file
+rm ./MED/seqs_MED.fna
 
 # Also, remove the pesky "|size:XXX" at the end of every OTU ID in the NODE_REPRESENTATIVES.fasta file.
 # This is necessary because:
 # 1. Adding metadata later on requires that the observation_metadata doesn't have the "|size:XXX"
 # 2. The tree cannot have "|size:XXX" otherwise the tree tips will not match up with the OTU table itself.
 
-sed 's/|size:[0-9]*$//g' ./decompose/NODE-REPRESENTATIVES.fasta > NODE_REP_FORDOWNSTREAM.fasta
-
+echo "Modifying MED fasta headers for use with QIIME..."
+sed 's/|size:[0-9]*$//g' ./MED/decompose-$minimumentropy/NODE-REPRESENTATIVES.fasta > NODE_REP_FORDOWNSTREAM.fasta
+echo "done!"
 #------------------------
 
 # SECTION FOUR: Making a tree and OTU Table
@@ -319,7 +289,7 @@ sed 's/|size:[0-9]*$//g' ./decompose/NODE-REPRESENTATIVES.fasta > NODE_REP_FORDO
 #------------------------
 
 # Assign Taxonomy using previous filepaths of references database. Need to use the unaligned database.
-
+echo "QIIME STEPS BEGIN HERE"
 echo "Assigning taxonomy..."
 assign_taxonomy.py -i NODE_REP_FORDOWNSTREAM.fasta -o assign_taxonomy -r "$reftreefasta" -t "$reftreemap"
 
@@ -330,47 +300,47 @@ align_seqs.py -i NODE_REP_FORDOWNSTREAM.fasta -t "$reftreealigned" -o aligned_se
 
 # Now, writing the newly aligned sequences and failures to the log for easy access later.
 
-echo "\n"
-echo "Aligned Sequences: " >> LOG
-less ./aligned_seqs/*aligned.fasta >> LOG
-echo "\n"
+echo "" >> LOG
 echo "Aligned failures: " >> LOG
 less ./aligned_seqs/*failures.fasta >> LOG
-echo "\n"
+echo "" >> LOG
 
 # Filtering alignment
 
-echo "Filtering alignment...\n"
+echo "Filtering alignment..."
 filter_alignment.py -i ./aligned_seqs/*aligned.fasta -s -e 0.10 -o filter_alignment
 
 # Make phylogenetic tree
 
-echo "Making phylogenetic tree...\n"
+echo "Making phylogenetic tree..."
 make_phylogeny.py -i ./filter_alignment/*.fasta -o makephylo_fastree.tre -t "$treemethod"
 
 # Make OTU table
 
-echo "Making OTU Table...\n"
+echo "Making OTU Table..."
 biom convert -i ./MATRIX-COUNT_transposed.txt -o OTU_Table.biom --to-json --table-type="OTU table"
 
-echo "####################\nOTU Table Summary:\n####################\n" >> LOG
+echo "####################" >> LOG
+echo "OTU Table Summary:" >> LOG
+echo "####################" >> LOG
 biom summarize-table -i OTU_Table.biom >> LOG
-echo "\n"
+echo "" >> LOG
 
 # Filter OTUs by removing singles and OTUs that have very few reads
 
-echo "Filtering OTUs...\n"
+echo "Filtering OTUs..."
 filter_otus_from_otu_table.py -i OTU_Table.biom -o removed_singles_few_reads.biom --min_count "$minimumcount"
 
-echo "\n" >> LOG
-echo "OTU Table Summary After Filtering:\n" >> LOG
+echo "" >> LOG
+echo "OTU Table Summary After Filtering:" >> LOG
 biom summarize-table -i removed_singles_few_reads.biom >> LOG
-echo "\n"
+echo "" >> LOG
 
-echo "Adding obs metadata...\n"
+echo "Adding obs metadata..."
 
 biom add-metadata -i removed_singles_few_reads.biom -o OTU_Table_wtaxa.biom --observation-metadata-fp ./assign_taxonomy/*.txt --observation-header OTUID,taxonomy,confidence --sc-separated taxonomy
 
 biom summarize-table -i ./OTU_Table_wtaxa.biom | tee -a LOG
 
-echo "DONE\n"
+echo "DONE!"
+echo "DONE" >> LOG
