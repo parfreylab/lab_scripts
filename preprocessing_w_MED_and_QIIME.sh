@@ -110,8 +110,12 @@ echo "" >> LOG
 # COPYING files over and unzipping them
 echo "Copying fasta files..."
 mkdir ./seq_fasta/
+
+echo "Do not be alarmed if it tells you there is 'no such file or directory'-- this is normal!"
+echo "Copying fasta files..."
 cp "$fastqlocation"/*fq* ./seq_fasta/
 cp "$fastqlocation"/*fastq* ./seq_fasta/
+echo "Done copying"
 
 # TODO: wrap each copy command in if statement that only executes if file in question exists
 	
