@@ -262,9 +262,9 @@ END {
     }
 }' ./MED/decompose-$minimumentropy/MATRIX-COUNT.txt > MATRIX-COUNT_tmp.txt
 
-# A few more alterations-- change the top left name from samples to #OTU ID
+# A few more alterations-- change the top left name from samples to #OTU ID, removing leading zeros from OTU IDs
 
-sed 's/samples/#OTU ID/g' MATRIX-COUNT_tmp.txt > MATRIX-COUNT_transposed.txt
+sed 's/samples/#OTU ID/g' MATRIX-COUNT_tmp.txt | sed 's/^0*//' > MATRIX-COUNT_transposed.txt
 
 rm MATRIX-COUNT_tmp.txt # Deletes intermediate file
 rm ./MED/seqs_MED.fna
@@ -275,7 +275,7 @@ rm ./MED/seqs_MED.fna
 # 2. The tree cannot have "|size:XXX" otherwise the tree tips will not match up with the OTU table itself.
 
 echo "Modifying MED fasta headers for use with QIIME..."
-sed 's/|size:[0-9]*$//g' ./MED/decompose-$minimumentropy/NODE-REPRESENTATIVES.fasta > NODE_REP_FORDOWNSTREAM.fasta
+sed 's/|size:[0-9]*$//g' ./MED/decompose-$minimumentropy/NODE-REPRESENTATIVES.fasta | sed 's/^>0*/>/' > NODE_REP_FORDOWNSTREAM.fasta
 echo "done!"
 #------------------------
 
