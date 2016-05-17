@@ -1,6 +1,5 @@
 #!/bin/bash
 
-### WHOOOOOOO MELISSA IS DA BOMB
 
 # Input:
 # Single seq file for all sequences
@@ -30,6 +29,8 @@
 # All files will be created inside this directory. This means I don't need complete filepaths in order to do all commands.
 # First, there will be a series of questions to ask. These answers will specify the parameters you want.
 
+macqiime
+
 echo "Here is a list of the info you will need to enter. Collect all this and have it ready before running this script. If you don't have it, you can press ctrl+c to kill the script now."
 echo "1. a name for your project (a directory named with the input here will be created in the folder you run the script in)"
 echo "2. is the data 16s or 18s"
@@ -40,6 +41,13 @@ echo "6. the trimming length for fastx toolkit (we ususally use 250)"
 echo "7. the tree building method. Valid choices are: clustalw, raxml_v730, muscle, fasttree, clearcut"
 echo "8. the minimum number of reads per OTU to include in final OTU table"
 echo "9. INPUT PROMPT COMES LATER: minimum substantive abundance (numeric. the -M paramteter for MED. a good baseline is 100, but your dataset may require a lower number. see MED documentation for additional details.)"
+
+echo ""
+echo ""
+echo "ARE YOU OPERATING IN MACQIIME? If not, you are about to waste a lot of time waiting. Do it now if you haven't."
+	echo ""
+	read -p "Press enter if you wish to continue. Press CTRL+C to exit script now"
+	echo ""
 
 echo "Please enter project name"
 read projectname
@@ -159,10 +167,12 @@ fi
 
 if [ "$projecttype" == 16 ]
 then
-    ourindex=`ls ./seq_fasta/ | grep -v *R1* | grep -v *R2*` #get the name of the index file
+	cd ./seq_fasta/
+    ourindex=`ls | grep -v *R1* | grep -v *R2*` #get the name of the index file
     echo "preparing sequences with QIIME..."	
-    split_libraries_fastq.py -f ./seq_fasta/*R1* -o multiple_split_libraries_fastq --barcode_read_fps "$ourindex" --mapping_fps "$mappingfile" --phred_quality_threshold 19 --barcode_type 12
+    split_libraries_fastq.py -i *R1* -o ../multiple_split_libraries_fastq --barcode_read_fps "$ourindex" --mapping_fps "$mappingfile" --phred_quality_threshold 19 --barcode_type 12
     echo "split_libraries_fastq script finished..."
+    cd ..
 fi
 
 # Trimming files to $trimlength bp using fastx.
