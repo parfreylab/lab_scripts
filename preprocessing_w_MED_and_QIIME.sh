@@ -38,9 +38,11 @@ echo "3. complete pathway to fastq files (just the folder they are in. they don'
 echo "4. complete filepath for properly formatted mapping file"
 echo "5. complete filepaths for the reference database rep set fasta, map of ref tree, and aligned rep set"
 echo "6. the trimming length for fastx toolkit (we ususally use 250)"
-echo "7. the tree building method. Valid choices are: clustalw, raxml_v730, muscle, fasttree, clearcut"
-echo "8. the minimum number of reads per OTU to include in final OTU table"
-echo "9. INPUT PROMPT COMES LATER: minimum substantive abundance (numeric. the -M paramteter for MED. a good baseline is 100, but your dataset may require a lower number. see MED documentation for additional details.)"
+echo "7. the alignment gap filtering parameter: a value from 0.0 to 1.0, representing the percentage of gaps that are required to filter out an alignment position. recommend 0.9 for 'safe bet'. please see filter_alignment.py documentation for more details."
+echo "8. the alignment entropy filtering paramter. a value from 0.0 to 1.0 representing the N/1.0 percentage of positions to be removed based on entropy. recommend 0.05 for 'safe bet'. please see filter_alignment.py documentation for more details."
+echo "9. the tree building method. Valid choices are: clustalw, raxml_v730, muscle, fasttree, clearcut"
+echo "10. the minimum number of reads per OTU to include in final OTU table"
+echo "11. INPUT PROMPT COMES LATER: minimum substantive abundance (numeric. the -M paramteter for MED. a good baseline is 100, but your dataset may require a lower number. see MED documentation for additional details.)"
 
 echo ""
 echo ""
@@ -101,6 +103,13 @@ echo "" >> LOG
 # Enter the trimming length for fastx_clipper and fastx_trimmer.
 echo "Enter trimming length for reads"
 read trimlength
+
+#enter the filter_alignment.py paramters. see documentation on QIIME website for more details.
+echo "Enter the gap filtering paramter (0.0 to 1.0). recommend 0.90"
+read gap
+
+echo "Enter the entropy filtering paramter (0.0 to 1.0). recommend 0.05"
+read entropy
 	
 # Enter Tree building method. Fasttree is fast and the default; raxml seems to be more popular. Although, I've read somewhere they're about the same?
 echo "Enter tree building method. Method for tree building. Valid choices are: clustalw, raxml_v730, muscle, fasttree, clearcut"
@@ -324,12 +333,12 @@ echo "" >> LOG
 # Filtering alignment
 
 echo "Filtering alignment..."
-filter_alignment.py -i ./aligned_seqs/*aligned.fasta -s -e 0.10 -o filter_alignment
+filter_alignment.py -i ./aligned_seqs/*aligned.fasta -s -e $entropy -g $gap -o "filter_alignment_G${gap}_E${entropy}"
 
 # Make phylogenetic tree
 
 echo "Making phylogenetic tree..."
-make_phylogeny.py -i ./filter_alignment/*.fasta -o makephylo_fastree.tre -t "$treemethod"
+make_phylogeny.py -i ./filter_alignment_G${gap}_E${entropy}/*.fasta -o makephylo_fastree.tre -t "$treemethod"
 
 # Make OTU table
 
