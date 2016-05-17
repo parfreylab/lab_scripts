@@ -89,13 +89,6 @@ echo "" >> LOG
 
 # Now, we enter some parameters and variables. There is a prompt first, and then the user may type in their conplete filepath.
 
-# Enter the minimum entropy. This is the only variable in this script that changes for MED (Minimum Entropy Decomposition)
-
-echo "Enter Minimum Substantive Abundance (for MED, see MED documentation for additional details) -- the default is total reads divided by 5000."
-read minimumentropy
-echo "minimum substantive abundance: $minimumentropy" >> LOG
-echo "" >> LOG
-
 	
 # Enter the trimming length for fastx_clipper and fastx_trimmer.
 echo "Enter trimming length for reads"
@@ -231,6 +224,15 @@ cd ..
 # (explained below)
 
 #------------------------
+
+
+# Enter the minimum entropy. This is the only variable in this script that changes for MED (Minimum Entropy Decomposition)
+
+echo "Enter Minimum Substantive Abundance (for MED, see MED documentation for additional details) -- the default is total reads divided by 5000."
+read minimumentropy
+echo "minimum substantive abundance: $minimumentropy" >> LOG
+echo "" >> LOG
+
 
 # Now, decompose fasta file. This is a single line.
 
