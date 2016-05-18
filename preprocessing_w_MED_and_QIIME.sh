@@ -338,7 +338,10 @@ filter_alignment.py -i ./aligned_seqs/*aligned.fasta -s -e $entropy -g $gap -o "
 # Make phylogenetic tree
 
 echo "Making phylogenetic tree..."
-make_phylogeny.py -i ./filter_alignment_G${gap}_E${entropy}/*.fasta -o makephylo_fastree.tre -t "$treemethod"
+make_phylogeny.py -i ./filter_alignment_G${gap}_E${entropy}/*.fasta -o tmp.tre -t "$treemethod"
+#remove "seq_" from trees generated with raxml
+sed 's/seq_//g' tmp.tre > makephylo_${treemethod}.tre
+rm tmp.tre
 
 # Make OTU table
 
