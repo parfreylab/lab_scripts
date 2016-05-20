@@ -189,9 +189,9 @@ fi
 mkdir Trimmed_Quality_Filtered_MSL
 cd multiple_split_libraries_fastq
 
-# Using the $trimlength inputted before, use fastx trimmer to trip the seq file from multiple split libraries.
+# Using the $trimlength inputted before, use fastx trimmer and clipper to trim the seq file from multiple split libraries and then filter out sequences less than the minimum sequence length.
 echo "Trimming and clipping seqeunces using fastx..."
-fastx_trimmer -l "$trimlength" -i seqs.fna | fastx_clipper -l "$trimlength" -o ../Trimmed_Quality_Filtered_MSL/seqs_trim_clip.fna
+fastx_trimmer -l "$trimlength" -i seqs.fna | fastx_clipper -v -a NNNNNNNNNNNNN  -l "$trimlength" -o ../Trimmed_Quality_Filtered_MSL/seqs_trim_clip.fna >> LOG
 echo "Trimming/Clipping Complete"
 echo "" >> ../LOG
 
