@@ -13,8 +13,8 @@ use diagnostics;
 #########
 ##USAGE##
 #########
-#perl scripts/generate_mapping_file.pl plate_map_with_swab_ids.txt barcode_platemap_spreadsheet.txt metadata_file_no_barcodes.txt
-#test example: perl scripts/generate_mapping_file.pl test/SEA3platemap.txt 515f_806r_illumina_primers_515barcoded.txt test/SEA3.Seagrass_Dec2016_map.no_barcodes.txt
+#perl scripts/add_barcocdes.fix_platemap.pl plate_map_with_swab_ids.txt barcode_platemap_spreadsheet.txt metadata_file_no_barcodes.txt
+#test example: perl scripts/add_barcocdes.fix_platemap.pl test/SEA3platemap.txt 515f_806r_illumina_primers_515barcoded.txt test/SEA3.Seagrass_Dec2016_map.no_barcodes.txt
 #IMPORTANT: see README for rules on file formatting 
 
 my $gridfile = $ARGV[0];
@@ -31,6 +31,7 @@ my $platename; #declare here to use as part of the output filename
 my $i=0; #use for discriminating between plate metadata and actual well data lines
 my @header;
 my %samplemap;
+my %wellmap;
 open (GRID, "<$gridfile") or die ("cannot open $gridfile\n");
 while(my $line = <GRID>) {
     chomp $line; #remove trailing whitespace if any
@@ -51,6 +52,8 @@ while(my $line = <GRID>) {
 	foreach my $ID (@swabIDs) { #for each sample ID, create a hash entry with the row and column names as the keys
 	    #print STDERR "$rowname, $ID, $header[$j], $j th header item\n";
 	    $samplemap{$rowname}{$header[$j]}=$ID;
+	    my $well = $rowname . $header[$j];
+	    $wellmap{$ID}=$well;
 	    $j++;
 	}
     }
@@ -77,9 +80,8 @@ print STDERR "there are $counter entries in the barcode spreadsheet for plate $p
 
 #third part of the script: read in metadata, add barcodes to it, print out mapping file with barcodes in, new platemap with sample IDs in.
 #read metadata file without barcodes. needs the following columns:
-##header## sampleID swabID plate barcode_well project_name person_responsible. we will use the first four columns to join the data
+##header## sampleID swabID plate project_name person_responsible.
 my %idmapping;
-my %plate_map_to_sampleID;
 my $counter2=0;
 my $header;
 my $linkerprimerseq="na";
@@ -95,14 +97,14 @@ while (my $line = <METADATA>) {
 	print OUTFILE1 "#SampleID", "\t", "BarcodeSequence", "\t", "LinkerPrimerSequence", "\t", $restofheader, "\n";
     }
     else {
-	my ($sampleID, $swabID, $plate, $barcode_well, $project_name, $person_responsible, @rest) = split(/\t/, $line); #we don't need any of this stuff now, but we could modify this script later to do other things with these extra fields if we needed to
+	my ($sampleID, $swabID, $plate, $project_name, $person_responsible, @rest) = split(/\t/, $line); #we don't need any of this stuff now, but we could modify this script later to do other things with these extra fields if we needed to
 	my $resttoprint = join "\t", @rest;
 	$idmapping{$swabID}=$sampleID;
-	my ($wellR, $wellC) = split("", $barcode_well, 2); #split on characters (example: A1 and B6 become A & 1, B & 6, respectively). don't split into more than two elements, so we don't accidentally end up with 3 strings for A12, H10, etc.
+	my $well = $wellmap{$sampleID};
+	my ($wellR, $wellC) = split("", $well, 2); #split on characters (example: A1 and B6 become A & 1, B & 6, respectively). don't split into more than two elements, so we don't accidentally end up with 3 strings for A12, H10, etc.
 	#create a new plate map hash with the sample IDs instead of swab IDs
-	$plate_map_to_sampleID{$wellR}{$wellC}=$sampleID;
 	my $barcode = $barcodemap{$wellR}{$wellC}; #hash is ready to be accessed by column and row names, same as above loop for grid file
-	print OUTFILE1 "$sampleID\t$barcode\t$linkerprimerseq\t$swabID\t$plate\t$barcode_well\t$project_name\t$person_responsible\t$resttoprint\n";	
+	print OUTFILE1 "$sampleID\t$barcode\t$linkerprimerseq\t$swabID\t$plate\t$well\t$project_name\t$person_responsible\t$resttoprint\n";	
     }
     $counter2++;
 }
@@ -121,10 +123,10 @@ foreach my $row (@rownames) {
     print OUTFILE2 "$row\t";
     my @row_data;
     foreach my $col (@colnames) {
-	push(@row_data, $plate_map_to_sampleID{$row}{$col});
+	push(@row_data, $samplemap{$row}{$col});
     }
     my $toprint = join "\t", @row_data;
-    print OUTFILE2 "$toprint\n"
+    print OUTFILE2 "$toprint\n";
 }
 close OUTFILE2;
 print STDERR "finished printing new platemap with sampleIDs\n";
