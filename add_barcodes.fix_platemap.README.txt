@@ -1,0 +1,36 @@
+#96 well plate script documentation
+#script is here: lab_share/scripts/add_barcodes.fix_platemap.py
+#########
+##USAGE##
+#########
+python add_barcodes.fix_platemap.py plate_map_with_swab_ids.txt barcode_platemap_spreadsheet.txt metadata_file_no_barcodes.txt
+test example: python add_barcodes.fix_platemap.py test/SEA3platemap.txt 515f_806r_illumina_primers_515barcoded.txt test/SEA3.Seagrass_Dec2016_map.no_barcodes.txt
+
+##IMPORTANT: all inputs should be tab separated text files
+##inputs:
+###1. visual layout of 96 well plate (grid format). user must make this file. (plate map, may have swab IDs in place of sample names) *
+###2. spreadsheet with barcodes in each primer plate. each plate has a unique barcode sequence
+###3. metadata file that links swab IDs to sample names, plus other metadata. **
+
+OUTPUT	1. A mapping file in plain text format, now with barcodes plus existing metadata (named PLATENAME.mapping_file.txt, where PLATENAME is the name of the plate as entered in your completed platemap*). 
+	2. A copy of the platemap (grid format) with sampleIDs instead of swabIDs. 
+	Output files will appear in the same directory as the input platemap.
+
+*please see the example platemap for a template on formatting this file. your file must conform to the template or the script will not work.
+** header line of this file must first contain the following columns in this order: #SampleID swabID plate barcode_well project_name person_responsible
+   other columns after are permitted and will be preserved in the order they appear in the input.
+
+#example plate map formatting# your plate map must conform exactly to this template, with tab separated values on each line
+########################################DO NOT INCLUDE THIS LINE##################################
+plate_name:	myplatename
+plate_num:	6
+	1	2	3	4	5	6	7	8	9	10	11	12
+A	s1	s9	etc
+B	s2	s10
+C	s3	s11
+D	s4	s12
+E	s5	s13
+F	s6	s14
+G	s7	s15
+H	s8	s16
+########################################DO NOT INCLUDE THIS LINE##################################
