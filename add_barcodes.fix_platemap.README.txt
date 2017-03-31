@@ -18,7 +18,7 @@ OUTPUT	1. A mapping file in plain text format, now with barcodes plus existing m
 
 *please see the example platemap for a template on formatting this file. your file must conform to the template or the script will not work.
 ** header line of this file must first contain the following columns in this order: #SampleID swabID plate barcode_well project_name person_responsible
-   other columns after are permitted and will be preserved in the order they appear in the input.
+   other columns after are permitted and will be preserved in the order they appear in the input. if #SampleID and swabID are not different these two columns can contain the same data
 
 #example plate map formatting# your plate map must conform exactly to this template, with tab separated values on each line
 ########################################DO NOT INCLUDE THIS LINE##################################
