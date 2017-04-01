@@ -1,5 +1,6 @@
 import re
 import argparse
+import os.path
 
 ####a script to create an analysis-ready mapping file and platemap with descriptive names from 96 well plate metadata files (metadata file, plate map, barcode plate spreadsheet -> mapping file w metadata & barcodes, plate map with descriptive names)####
 ##IMPORTANT: all inputs should be tab separated text files
@@ -21,27 +22,33 @@ print "\n"
 #Description of arguments needed
 parser = argparse.ArgumentParser(
 	description = "Three inputs required: plate_map.txt barcode_file.txt metadata.txt") 
-parser.add_argument( #gridfile argument. user defined.
+requiredargs = parser.add_argument_group("required arguments")
+requiredargs.add_argument( #gridfile argument. user defined.
 	"-g",
 	"--gridfile",
 	help = "Path to 96 well plate map containing sample IDs, string. See README for this script for formatting instructions.",
 	required = True)
-parser.add_argument( #barcodefile. 515f_806r_illumina_primers_515barcoded.txt
+requiredargs.add_argument( #barcodefile. 515f_806r_illumina_primers_515barcoded.txt
 	"-b",
 	"--barcodefile",
 	help = "Path to barcode file, string. This is the lab's barcode spreadsheet. Can be found on in the botany shared disk space. Ask on the lab Slack if you don't know where to find it.",
 	required = True)
-parser.add_argument( #metadatafile. user defined.
+requiredargs.add_argument( #metadatafile. user defined.
 	"-m",
 	"--metadatafile",
 	help = "Path to metadata file, string. Samples in rows, metadata in columns. You can add whatever metadata you like, but the first few columns must fit what's described in the README file for this script.",
 	required = True)
+parser.add_argument( #outputpath. user defined. optional.
+	"-o",
+	"--outputpath",
+	help = "Path to where the output files will be saved, string. If unspecified, default is current working directory.")
 
 args = parser.parse_args()
 
 gridfile = args.gridfile
 barcodefile = args.barcodefile
 metadatafile = args.metadatafile
+outputpath = args.outputpath
 
 header = []
 samplemap = {}
@@ -97,7 +104,11 @@ print "\nif there are fewer than 96 entries for the above plate then there is a 
 idmapping = {}
 header = ""
 linkerprimerseq = 'na'
-OUTFILE1 = open(platename + ".mapping_file.txt", "w") #create an outfile, will be created in the working directory.
+try:
+	completeName = os.path.join(outputpath, platename + ".mapping_file.txt")
+	OUTFILE1 = open(completeName, "w") #create an outfile in the specified directory.
+except AttributeError:
+	OUTFILE1 = open(platename + ".mapping_file.txt", "w") #create an outfile, will be created in the working directory if unspecified.
 with open(metadatafile) as METADATA: #read in metadata file
 	for i, line in enumerate(METADATA): #for each line
 		data = line.strip() #strip whitespace
@@ -121,7 +132,11 @@ OUTFILE1.close()
 print "finished printing mapping file"
 
 #now print new barcode plate with descriptive sample names
-OUTFILE2 = open(platename + ".platemap.w_sample_names.txt", "w") #create an outfile, will be created in the working directory.
+try:
+	completeName = os.path.join(outputpath, platename + ".platemap.w_sample_names.txt")
+	OUTFILE2 = open(completeName, "w") #create an outfile, will be created in the working directory.
+except AttributeError:
+	OUTFILE2 = open(platename + ".platemap.w_sample_names.txt", "w") #create an outfile, will be created in the working directory.
 OUTFILE2.write("Plate:\t" + platename + "\nPlate_#:\t" + plateno + "\n") #write in the plate info on two header lines
 colnames = ["1","2","3","4","5","6","7","8","9","10","11","12"]
 rownames = ["A","B","C","D","E","F","G","H"]
