@@ -134,7 +134,7 @@ print "finished printing mapping file"
 #now print new barcode plate with descriptive sample names
 try:
 	completeName = os.path.join(outputpath, platename + ".platemap.w_sample_names.txt")
-	OUTFILE2 = open(completeName, "w") #create an outfile, will be created in the working directory.
+	OUTFILE2 = open(completeName, "w") #create an outfile in the specified directory.
 except AttributeError:
 	OUTFILE2 = open(platename + ".platemap.w_sample_names.txt", "w") #create an outfile, will be created in the working directory.
 OUTFILE2.write("Plate:\t" + platename + "\nPlate_#:\t" + plateno + "\n") #write in the plate info on two header lines
