@@ -132,7 +132,7 @@ OUTFILE1.close()
 print "finished printing mapping file"
 
 #now print new barcode plate with descriptive sample names
-try:
+try: #this works if the user defines an output path when running the script
 	completeName = os.path.join(outputpath, platename + ".platemap.w_sample_names.txt")
 	OUTFILE2 = open(completeName, "w") #create an outfile in the specified directory.
 except AttributeError:
