@@ -118,14 +118,17 @@ with open(metadatafile) as METADATA: #read in metadata file
 		else:
 			sampleID, swabID, plate, project_name, person_responsible, resttoprint = data.split('\t', 5) #split the first five elements as necessary, store the rest in resttoprint
 			idmapping[swabID] = sampleID #link sample IDs to swab IDs with a dictionary
-			well = wellmap[sampleID] #retrieve well ID from wellmap dictionary
-			match = re.match(r"([a-z])([0-9]+)", well, re.I) #performs case-insensitive matching of letters and numbers
-			if match:
-				wellRC = match.groups() #split the matched groups into letters (well row) and numbers (well column) (ex: 'A12' becomes A & 12)
-				wellR, wellC = wellRC #list wellRC becomes strings wellR and wellC
-			barcode = barcodemap[wellR, wellC] #retrieve barcode from dictionary 'barcodemap' using the well column and row
-			OUTFILE1.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % 
-				(sampleID, barcode, linkerprimerseq, swabID, plate, well, project_name, person_responsible, resttoprint)) #write all collected info to the output file
+			try: #try to retrieve well ID from dictionary and write to the outfile
+				well = wellmap[sampleID] #retrieve well ID from wellmap dictionary
+				match = re.match(r"([a-z])([0-9]+)", well, re.I) #performs case-insensitive matching of letters and numbers
+				if match:
+					wellRC = match.groups() #split the matched groups into letters (well row) and numbers (well column) (ex: 'A12' becomes A & 12)
+					wellR, wellC = wellRC #list wellRC becomes strings wellR and wellC
+				barcode = barcodemap[wellR, wellC] #retrieve barcode from dictionary 'barcodemap' using the well column and row
+				OUTFILE1.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % 
+					(sampleID, barcode, linkerprimerseq, swabID, plate, well, project_name, person_responsible, resttoprint)) #write all collected info to the output file
+			except KeyError: #if we encounter a sample ID in the metadata file but not in the platemap, continue running and do not crash.
+				continue
 METADATA.close()
 print "finished parsing metadata file"
 OUTFILE1.close()
