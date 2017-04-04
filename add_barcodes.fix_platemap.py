@@ -96,7 +96,7 @@ with open(barcodefile) as BARCODES: #open barcode file
 			counter += 1 #increment a counter so we know how many entries we've got in the barcode file that match our plate. should be 96 for each plate.
 BARCODES.close()
 print "there are %d entries in the barcode spreadsheet for plate %s" % (counter, plateno)
-print "\nif there are fewer than 96 entries for the above plate then there is a problem!\n"
+print "if there are fewer than 96 entries for the above plate then there is a problem!\n"
 
 #third part of the script: read in metadata, add barcodes to it, print out mapping file with barcodes in, new platemap with sample IDs in.
 #read metadata file without barcodes. needs the following columns:
@@ -128,6 +128,7 @@ with open(metadatafile) as METADATA: #read in metadata file
 				OUTFILE1.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % 
 					(sampleID, barcode, linkerprimerseq, swabID, plate, well, project_name, person_responsible, resttoprint)) #write all collected info to the output file
 			except KeyError: #if we encounter a sample ID in the metadata file but not in the platemap, continue running and do not crash.
+                                print "sample %s not on platemap" % sampleID
 				continue
 METADATA.close()
 print "finished parsing metadata file"
