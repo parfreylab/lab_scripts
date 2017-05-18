@@ -75,7 +75,7 @@ with open(gridfile) as GRID:
 				well = rowname + header[j] #join plate well and column for single well ID
 				wellmap[ID] = well #create single dictionary linking well ID to sample ID
 				j += 1 #increment j
-                                
+
 print "Getting data for plate number: %s" % plateno
 #read barcode spreadsheet
 ##header##	plate	well	name	illumina_5_adapter	golay_barcode	forward_primer	forward_primer_linker	515f_fw_primer	pcr_primer
@@ -116,10 +116,10 @@ with open(metadatafile) as METADATA: #read in metadata file
 			ID, restofheader = data.split('\t', 1) #split only by first tab; ID is the first element of the header
 			OUTFILE1.write("#SampleID \t BarcodeSequence \t LinkerPrimerSequence \t" + restofheader + "\n") #write the header for the output file
 		else:
-			sampleID, swabID, plate, project_name, person_responsible, resttoprint = data.split('\t', 5) #split the first five elements as necessary, store the rest in resttoprint
-			idmapping[swabID] = sampleID #link sample IDs to swab IDs with a dictionary
+			sampleID, swabID, plate, barcode_well, project_name, person_responsible, resttoprint = data.split('\t', 6) #split the first five elements as necessary, store the rest in resttoprint
+			idmapping[swabID] = sampleID #link swab IDs to sample IDs with a dictionary
 			try: #try to retrieve well ID from dictionary and write to the outfile
-				well = wellmap[sampleID] #retrieve well ID from wellmap dictionary
+				well = wellmap[swabID] #retrieve well ID from wellmap dictionary
 				match = re.match(r"([a-z])([0-9]+)", well, re.I) #performs case-insensitive matching of letters and numbers
 				if match:
 					wellRC = match.groups() #split the matched groups into letters (well row) and numbers (well column) (ex: 'A12' becomes A & 12)
@@ -128,7 +128,7 @@ with open(metadatafile) as METADATA: #read in metadata file
 				OUTFILE1.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % 
 					(sampleID, barcode, linkerprimerseq, swabID, plate, well, project_name, person_responsible, resttoprint)) #write all collected info to the output file
 			except KeyError: #if we encounter a sample ID in the metadata file but not in the platemap, continue running and do not crash.
-                                print "sample %s not on platemap" % sampleID
+				print "sample %s not on platemap" % sampleID
 				continue
 METADATA.close()
 print "finished parsing metadata file"
@@ -151,7 +151,7 @@ for row in rownames: #for each row in the file
 	row_data = []
 	for col in colnames: #for each column
 		try: #filling the list with data
-			row_data.append(samplemap[row, col]) #append values from dictionary 'samplemap' (using keys row and column) to the list 'row_data'
+			row_data.append(idmapping[samplemap[row, col]]) #append values from dictionary 'idmapping' (using keys row and column of dictionary 'samplemap') to the list 'row_data'
 		except KeyError: #if we try to call a well with no information, don't crash just continue. it just means there is empty space in the platemap.
 			continue
 	toprint = "\t".join(row_data) #create tab separated string from collected row data
