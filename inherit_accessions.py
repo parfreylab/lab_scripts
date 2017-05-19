@@ -46,5 +46,39 @@ matrix_count = args.matrix_count
 otu_map = args.otu_map
 outputfile = args.outputfile
 
+#read OTU map
+#no header
+otu_map = {}
+with open(otu_map) as MAP: #open barcode file
+        for i, line in enumerate(MAP): #for each line
+                data = line.rstrip() #strip whitespace
+                all_in_line = data.split('\t') #split on tab
+                accession = all_in_line[0] #first element
+                OTUs = all_in_line[1:] #second through Nth elements are OTU IDs
+		otu_map[accession] = OTUs
+MAP.close()
 
 
+#read matrix file. OTUs in rows, samples in columns
+matrix = {}
+with open () as MATRIXFILE: #open matrix count file
+	for i, line in enumerate(MATRIXFILE): #for each line
+	data = line.rstrip() #strip whitespace
+	all = data.split('\t') #split on tab
+	OTU = all[0] #otu ID is the rowname
+	counts = all[1:] #read counts are the rest of each line
+	matrix[OTU] = counts #link counts with OTUs
+MATRIXFILE.close()
+
+#now do the operations
+
+#for each accession
+
+#collect OTUs that belong to it
+
+#merge them by indices? #there might be a cool easy way to do this in python. do some googling before trying to reinvent the wheel
+#after merge print to file
+
+#keep track of OTUs merged
+
+#for all other OTUs, just print to file
