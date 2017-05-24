@@ -73,7 +73,15 @@ MATRIXFILE.close()
 #now do the operations
 
 #for each accession
+for key in sorted(otu_map):
+        data=otu_map[key]
+        otus=data.split('\t')
+        counts=list()
+        for ID in otus:
+                counts=matrix[ID].split('\t')
+                
 
+                
 #collect OTUs that belong to it
 
 #merge them by indices? #there might be a cool easy way to do this in python. do some googling before trying to reinvent the wheel
