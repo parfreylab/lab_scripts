@@ -1,6 +1,9 @@
+import sys
 import re
 import argparse
 import os.path
+import numpy as np
+
 
 ####a script that applies SILVA accessions to matching OTUs, after closed reference OTU picking for a MED output####
 #IMPORTANT: this script will collapse nodes that match the same accession and add the read counts sample-wise to produce a new 'node' that represents all reads matching an accession in each sample
@@ -16,14 +19,14 @@ import os.path
 #########
 ##USAGE##
 #########
-#python /path/to/inherit_accessions.py -i MATRIX-COUNT.txt -m NODE-REPRESENTATIVES.DOWNSTREAM_otus.txt -o MATRIX-COUNT.inherited_accessions.txt
+#python /path/to/inherit_accessions.py -i MATRIX-COUNT.transposed.txt -m NODE-REPRESENTATIVES.DOWNSTREAM_otus.txt -o MATRIX-COUNT.transposed.inherited_accessions.txt
 
 print "run: python inherit_accessions.py -h for help."
 print "\n"
 
 #Description of arguments needed
 parser = argparse.ArgumentParser(
-	description = "Two inputs required: MATRIX-COUNT.txt NODE-REPRESENTATIVES.DOWNSTREAM_otus.txt") 
+	description = "Two inputs required: MATRIX-COUNT.transposed.txt NODE-REPRESENTATIVES.DOWNSTREAM_otus.txt") 
 requiredargs = parser.add_argument_group("required arguments")
 requiredargs.add_argument( #matrix file. user defined.
 	"-i",
@@ -43,13 +46,13 @@ args = parser.parse_args()
 
 
 matrix_count = args.matrix_count
-otu_map = args.otu_map
+otu_mapfile = args.otu_map
 outputfile = args.outputfile
 
 #read OTU map
 #no header
 otu_map = {}
-with open(otu_map) as MAP: #open barcode file
+with open(otu_mapfile) as MAP: #open barcode file
         for i, line in enumerate(MAP): #for each line
                 data = line.rstrip() #strip whitespace
                 all_in_line = data.split('\t') #split on tab
@@ -61,32 +64,64 @@ MAP.close()
 
 #read matrix file. OTUs in rows, samples in columns
 matrix = {}
-with open () as MATRIXFILE: #open matrix count file
+arraylen = ()
+header = []
+with open (matrix_count) as MATRIXFILE: #open matrix count file
 	for i, line in enumerate(MATRIXFILE): #for each line
-	data = line.rstrip() #strip whitespace
-	all = data.split('\t') #split on tab
-	OTU = all[0] #otu ID is the rowname
-	counts = all[1:] #read counts are the rest of each line
-	matrix[OTU] = counts #link counts with OTUs
+                if i == 0:
+                        data = line.rstrip()
+                        header = data.split('\t')
+                else:
+	                data = line.rstrip() #strip whitespace
+	                all = data.split('\t') #split on tab
+	                OTU = all[0] #otu ID is the rowname
+	                counts = all[1:] #read counts are the rest of each line
+                        counts = map(int, counts)
+                        arraylen=len(counts)
+	                matrix[OTU] = counts #link counts with OTUs
 MATRIXFILE.close()
 
-#now do the operations
+#now merge OTUs that belong to the same accession
+try:
+        outputfile2=outputfile[:-4] #remove extension (if it is a 3 letter extension. This file will always be a .txt file so I don't think we need to worry here.)
+        completename=os.path.join(outputfile2 + ".inherited_accessions.txt")
+        OUTFILE=open(completename, "w")
+except AttributeError:
+        completename=os.path.join(matrix_count + ".inherited_accessions.txt")
+        OUTFILE=open(completename, "w")
+accession_counts = {}
+otus_merged = {}
+for key in sorted(otu_map): #for each accession
+        otus = otu_map[key] #.split('\t') #retrieve OTU string from hash, split on tab to make list
+        merged = [0] * arraylen #declare empty list to store merged read counts
+        merged = map(int, merged)
+        merged = np.array(merged)
+        for ID in otus: #for each OTU ID belonging to an accession
+                otus_merged[ID]=1 #save OTU ID in dictionary. test this hash later to decide which OTUs to include in final OTU map
+                counts=np.array(matrix[ID]) #.split('\t') #collect read counts as individual elements of a list
+                #tmp=map(add, int(counts), int(merged))
+                #tmp=[sum(x) for x in zip(counts,merged)] #store read counts in the 'merged' list, adding the new counts for each OTU we are merging
+                tmp = counts + merged
+                merged = tmp.tolist()
+                #merged = [sum(x) for x in izip_longest(counts, merged, fillvalue=0)]
+                #sys.stderr.write(ID + "\t" + '\t'.join(merged) + "\n")
+        accession_counts[key]=merged #store merged info in dictionary (hash)
+        merged=[] #clear merged list
 
-#for each accession
-for key in sorted(otu_map):
-        data=otu_map[key]
-        otus=data.split('\t')
-        counts=list()
-        for ID in otus:
-                counts=matrix[ID].split('\t')
+
+#and print accessions and unmerged OTUs to the outfile
+headerprint = "\t".join(header)
+OUTFILE.write(headerprint + "\n")
+for key in sorted(accession_counts): #for each accession
+        toprint='\t'.join(str(x) for x in accession_counts[key]) #must coerce to str from int (needed int to do math with numpy above)
+#        toprint="\t".join(accession_counts[key]) #make string from contents of dictionary[list]
+        OUTFILE.write(key + toprint + "\n") #print read counts to file
+
+for key in sorted(matrix): #for OTU IDs
+        if key not in otus_merged: #if we didn't merge the OTU into an accession
+                toprint='\t'.join(str(x) for x in matrix[key])
+                #toprint="\t".join(matrix[key]) #collect read counts into string
+                OUTFILE.write(key + toprint + "\n") #print read coutnts to file
                 
-
-                
-#collect OTUs that belong to it
-
-#merge them by indices? #there might be a cool easy way to do this in python. do some googling before trying to reinvent the wheel
-#after merge print to file
-
-#keep track of OTUs merged
-
-#for all other OTUs, just print to file
+        else: #otherwise don't do anything
+             pass
