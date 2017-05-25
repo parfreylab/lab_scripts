@@ -100,21 +100,20 @@ for key in sorted(otu_map): #for each accession
 
 #print results to output file
 try:
-        outputfile2=outputfile[:-4] #remove extension (if it is a 3 letter extension. This file will always be a .txt file so I don't think we need to worry here.)
-        completename=os.path.join(outputfile2)
-        OUTFILE=open(completename, "w")
+        OUTFILE=open(outputfile, "w")
 except AttributeError:
-        completename=os.path.join(matrix_count + ".inherited_accessions.txt")
+        outputfile=matrix_count[:-4] #remove extension (this depends on the file extension being 3 characters, plus a period delimiter. since these files are always going to be .txt files this should be fine for now.
+        completename=os.path.join(outputfile + ".inherited_accessions.txt")
         OUTFILE=open(completename, "w")
 headerprint = "\t".join(header)
 OUTFILE.write(headerprint + "\n")
 for key in sorted(accession_counts): #for each accession
         toprint='\t'.join(str(x) for x in accession_counts[key]) #must coerce to str from int (needed int to do math with numpy above)
-        OUTFILE.write(key + toprint + "\n") #print read counts to file
+        OUTFILE.write(key + "\t" + toprint + "\n") #print read counts to file
 
 for key in sorted(matrix): #for all OTU IDs we started with
         if key not in otus_merged: #if we didn't merge the OTU into an accession
                 toprint='\t'.join(str(x) for x in matrix[key])
-                OUTFILE.write(key + toprint + "\n") #print read counts to file
+                OUTFILE.write(key + "\t" + toprint + "\n") #print read counts to file
         else: #otherwise don't do anything (this skips merged OTUs, whose read counts were merged already)
              pass
