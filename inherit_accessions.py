@@ -81,47 +81,40 @@ with open (matrix_count) as MATRIXFILE: #open matrix count file
 	                matrix[OTU] = counts #link counts with OTUs
 MATRIXFILE.close()
 
-#now merge OTUs that belong to the same accession
-try:
-        outputfile2=outputfile[:-4] #remove extension (if it is a 3 letter extension. This file will always be a .txt file so I don't think we need to worry here.)
-        completename=os.path.join(outputfile2 + ".inherited_accessions.txt")
-        OUTFILE=open(completename, "w")
-except AttributeError:
-        completename=os.path.join(matrix_count + ".inherited_accessions.txt")
-        OUTFILE=open(completename, "w")
+#now merge OTUs that were assigned the same accession
+
 accession_counts = {}
 otus_merged = {}
 for key in sorted(otu_map): #for each accession
         otus = otu_map[key] #.split('\t') #retrieve OTU string from hash, split on tab to make list
-        merged = [0] * arraylen #declare empty list to store merged read counts
+        merged = [0] * arraylen #declare empty list of length N (where N is the number of sample columns in the MATRIX-COUNT file) to store merged read counts
         merged = map(int, merged)
         merged = np.array(merged)
         for ID in otus: #for each OTU ID belonging to an accession
                 otus_merged[ID]=1 #save OTU ID in dictionary. test this hash later to decide which OTUs to include in final OTU map
                 counts=np.array(matrix[ID]) #.split('\t') #collect read counts as individual elements of a list
-                #tmp=map(add, int(counts), int(merged))
-                #tmp=[sum(x) for x in zip(counts,merged)] #store read counts in the 'merged' list, adding the new counts for each OTU we are merging
-                tmp = counts + merged
-                merged = tmp.tolist()
-                #merged = [sum(x) for x in izip_longest(counts, merged, fillvalue=0)]
-                #sys.stderr.write(ID + "\t" + '\t'.join(merged) + "\n")
+                tmp = counts + merged #merge the two numpy arrays
+                merged = tmp.tolist() #convert the merged arrays into a list, merged, which stores values for up to N OTUs where N is the number of OTUs belonging to an accession
         accession_counts[key]=merged #store merged info in dictionary (hash)
         merged=[] #clear merged list
 
-
-#and print accessions and unmerged OTUs to the outfile
+#print results to output file
+try:
+        outputfile2=outputfile[:-4] #remove extension (if it is a 3 letter extension. This file will always be a .txt file so I don't think we need to worry here.)
+        completename=os.path.join(outputfile2)
+        OUTFILE=open(completename, "w")
+except AttributeError:
+        completename=os.path.join(matrix_count + ".inherited_accessions.txt")
+        OUTFILE=open(completename, "w")
 headerprint = "\t".join(header)
 OUTFILE.write(headerprint + "\n")
 for key in sorted(accession_counts): #for each accession
         toprint='\t'.join(str(x) for x in accession_counts[key]) #must coerce to str from int (needed int to do math with numpy above)
-#        toprint="\t".join(accession_counts[key]) #make string from contents of dictionary[list]
         OUTFILE.write(key + toprint + "\n") #print read counts to file
 
-for key in sorted(matrix): #for OTU IDs
+for key in sorted(matrix): #for all OTU IDs we started with
         if key not in otus_merged: #if we didn't merge the OTU into an accession
                 toprint='\t'.join(str(x) for x in matrix[key])
-                #toprint="\t".join(matrix[key]) #collect read counts into string
-                OUTFILE.write(key + toprint + "\n") #print read coutnts to file
-                
-        else: #otherwise don't do anything
+                OUTFILE.write(key + toprint + "\n") #print read counts to file
+        else: #otherwise don't do anything (this skips merged OTUs, whose read counts were merged already)
              pass
