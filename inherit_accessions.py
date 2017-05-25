@@ -26,17 +26,22 @@ print "\n"
 
 #Description of arguments needed
 parser = argparse.ArgumentParser(
-	description = "Two inputs required: MATRIX-COUNT.transposed.txt NODE-REPRESENTATIVES.DOWNSTREAM_otus.txt") 
+	description = "Three inputs required: MATRIX-COUNT.transposed.txt NODE-REPRESENTATIVES.DOWNSTREAM_otus.txt complete_taxonomy_assignments.txt") 
 requiredargs = parser.add_argument_group("required arguments")
 requiredargs.add_argument( #matrix file. user defined.
 	"-i",
 	"--matrix_count",
-	help = "Path to raw MED output file MATRIX-COUNT.txt",
+	help = "Path to modified MED output file MATRIX-COUNT.transposed.txt. As name suggests, must be transposed, and also have leading zeroes removed from OTU IDs.",
 	required = True)
 requiredargs.add_argument( #path to otu map. user defined.
 	"-m",
 	"--otu_map",
 	help = "The OTU map produced from closed-reference OTU picking with MED nodes against the SILVA database.",
+	required = True)
+requiredargs.add_argument( #path to otu map. user defined.
+	"-t",
+	"--taxonomy_assignments",
+	help = "The taxonomies inherited and assigned in the previous steps of the pipeline. Must be tab-delmited with the first column as accessions or OTU IDs, and the second column as the taxonomy string. Confidence values or number of DB hits considered will not be retained.",
 	required = True)
 parser.add_argument( #output file name. user defined. optional.
 	"-o",
@@ -47,6 +52,7 @@ args = parser.parse_args()
 
 matrix_count = args.matrix_count
 otu_mapfile = args.otu_map
+taxonomy=args.taxonomy_assignments
 outputfile = args.outputfile
 
 #read OTU map
@@ -60,7 +66,6 @@ with open(otu_mapfile) as MAP: #open barcode file
                 OTUs = all_in_line[1:] #second through Nth elements are OTU IDs
 		otu_map[accession] = OTUs
 MAP.close()
-
 
 #read matrix file. OTUs in rows, samples in columns
 matrix = {}
@@ -76,23 +81,31 @@ with open (matrix_count) as MATRIXFILE: #open matrix count file
 	                all = data.split('\t') #split on tab
 	                OTU = all[0] #otu ID is the rowname
 	                counts = all[1:] #read counts are the rest of each line
-                        counts = map(int, counts)
+                        counts = map(int, counts) #cast as integers rather than characters
                         arraylen=len(counts)
 	                matrix[OTU] = counts #link counts with OTUs
 MATRIXFILE.close()
 
-#now merge OTUs that were assigned the same accession
+taxa = {}
+#read taxonomy assignments
+with open (taxonomy) as TAXONOMYFILE:
+        for i, line in enumerate(TAXONOMYFILE):
+                data = line.rstrip() #strip whitespace
+                all = data.split('\t') #split on tab
+                taxa[all[0]] = all[1] #make dictionary of IDs to taxa strings (first and second element of each row, respectively)
+TAXONOMYFILE.close()
 
+#now merge OTUs that were assigned the same accession
 accession_counts = {}
 otus_merged = {}
 for key in sorted(otu_map): #for each accession
         otus = otu_map[key] #.split('\t') #retrieve OTU string from hash, split on tab to make list
         merged = [0] * arraylen #declare empty list of length N (where N is the number of sample columns in the MATRIX-COUNT file) to store merged read counts
-        merged = map(int, merged)
-        merged = np.array(merged)
+        merged = map(int, merged) #cast as integers rather than characters
+        merged = np.array(merged) #convert to NumPY array
         for ID in otus: #for each OTU ID belonging to an accession
                 otus_merged[ID]=1 #save OTU ID in dictionary. test this hash later to decide which OTUs to include in final OTU map
-                counts=np.array(matrix[ID]) #.split('\t') #collect read counts as individual elements of a list
+                counts=np.array(matrix[ID]) #convert to NumPY array
                 tmp = counts + merged #merge the two numpy arrays
                 merged = tmp.tolist() #convert the merged arrays into a list, merged, which stores values for up to N OTUs where N is the number of OTUs belonging to an accession
         accession_counts[key]=merged #store merged info in dictionary (hash)
@@ -106,14 +119,14 @@ except AttributeError:
         completename=os.path.join(outputfile + ".inherited_accessions.txt")
         OUTFILE=open(completename, "w")
 headerprint = "\t".join(header)
-OUTFILE.write(headerprint + "\n")
+OUTFILE.write(headerprint + "\t" + "taxonomy" + "\n") #write the header of the file, taxonomy column goes last.
 for key in sorted(accession_counts): #for each accession
         toprint='\t'.join(str(x) for x in accession_counts[key]) #must coerce to str from int (needed int to do math with numpy above)
-        OUTFILE.write(key + "\t" + toprint + "\n") #print read counts to file
+        OUTFILE.write(key + "\t" + toprint + "\t" + taxa[key] + "\n") #print read counts and taxonomy string to file
 
 for key in sorted(matrix): #for all OTU IDs we started with
         if key not in otus_merged: #if we didn't merge the OTU into an accession
                 toprint='\t'.join(str(x) for x in matrix[key])
-                OUTFILE.write(key + "\t" + toprint + "\n") #print read counts to file
+                OUTFILE.write(key + "\t" + toprint + "\t" + taxa[key] + "\n") #print read counts and taxonomy string to file
         else: #otherwise don't do anything (this skips merged OTUs, whose read counts were merged already)
              pass
