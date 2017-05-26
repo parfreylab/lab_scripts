@@ -12,14 +12,15 @@ import numpy as np
 ##inputs:
 ###1. MED output MATRIX-COUNTS.txt
 ###2. Accession/OTU map from closed ref OTU picking output
+###3. Complete taxonomy assignments for accessions/OTUs
 
 ##output:
-###1. MED MATRIX-COUNT file, with inherited accessions
+###1. MED MATRIX-COUNT file, with inherited accessions and taxonomies
 
 #########
 ##USAGE##
 #########
-#python /path/to/inherit_accessions.py -i MATRIX-COUNT.transposed.txt -m NODE-REPRESENTATIVES.DOWNSTREAM_otus.txt -o MATRIX-COUNT.transposed.inherited_accessions.txt
+#python /path/to/inherit_accessions.py -i MATRIX-COUNT.transposed.txt -m NODE-REPRESENTATIVES.DOWNSTREAM_otus.txt -t complete_taxonomy_assignments.txt -o MATRIX-COUNT.transposed.inherited_accessions.txt
 
 print "run: python inherit_accessions.py -h for help."
 print "\n"
