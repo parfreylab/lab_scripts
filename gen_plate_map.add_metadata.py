@@ -19,7 +19,7 @@ outputs:
 #########
 # USAGE #
 #########
-# example usage: python /path/to/plate_map.add_metadata.py -m /path/to/metadatafile.txt -b /path/to/barcodefile.txt -p 2,7 -w D4 --row -o out/
+# example usage: python /path/to/gen_plate_map.add_metadata.py -m /path/to/metadatafile.txt -b /path/to/barcodefile.txt -p 2,7 -w D4 --row -o out/
 IMPORTANT: see README for rules on file formatting
 """
 
