@@ -1,0 +1,29 @@
+# metadata barcodes and platemap generation script documentation
+# script is here: lab_share/scripts/gen_plate_map.add_metadata.py
+
+#########
+# USAGE #
+#########
+# example usage: python /path/to/plate_map.add_metadata.py -m /path/to/metadatafile.txt -b /path/to/barcodefile.txt -p 2,7 -w D4 --row -o out/
+
+IMPORTANT: input files must be tab-delimited
+
+inputs:
+1. metadata file with sample IDs, swab IDs, project name, person responsible, and other metadata (in that order) *
+2. spreadsheet with barcodes in each primer plate. each plate has a unique barcode sequence
+3. (optional) starting plate number (1-10). if multiple plates are to be specified, separate them by commas only
+4. (optional) starting well (A1-H12) **
+5. (optional) assigning barcodes by row rather than column ***
+6. (optional) path to output folder
+
+outputs:
+1. a mapping file in plain text format, now with plate, barcode well, and barcodes columns added and populated with values (named METADATA.barcodes_added.txt, where METADATA is the input metadata filename)
+2. a platemap with sample IDs corresponding to the generated metadata file. if more than one plate is required, additional platemaps will be generated (named project_name_sample_plate_num_X.txt, where X is the plate number)
+3. a platemap with swab IDs corresponding to the generated metadata file. if more than one plate is required, additional platemaps will be generated (named project_name_swab_plate_num_X.txt, where X is the plate number)
+
+* header line of this file must first contain the following columns in this order: #SampleID swabID project_name person_responsible
+  other columns after are permitted and will be preserved in the order they appear in the input. if #SampleID and swabID are not different these two columns can contain the same data
+  
+** If D6 or H12 is specified as the starting well, they will be moved to D7 and A1 (of a new plate) respectively. D6 and H12 will always be blanks
+
+*** If specified, barcodes will be assigned by rows (A1, A2, ..., H11, H12) to each sample rather than by columns (A1, B1, ..., G12, H12)
