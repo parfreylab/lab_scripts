@@ -43,7 +43,7 @@ try: # try to create an outfile in the specified directory
 except AttributeError: # create an outfile in the current directory
 	trim_out = open((trimmed_file_base + ".MED.fna"), "w")
 
-with open(trimmed_file) as f:
+with open(trimmed_file, "U") as f:
 	for i, line in enumerate(f):
 		if line.startswith(">"): 		   # if the line is a read header
 			line = line.strip()			   # remove leading and trailing whitespace
