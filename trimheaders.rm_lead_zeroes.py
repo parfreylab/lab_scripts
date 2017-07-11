@@ -13,7 +13,8 @@ outputs:
 1. a MED analysis ready FASTA file with headers properly formatted
 2. the transposed matrix count file and/or node representative sequences file with leading zeroes removed
 
-example usage: python trimheaders.add_read.py -f seqs.fna -m MATRIX-COUNT.txt -n NODE-REPRESENTATIVES.fasta -o /path/to/output/folder
+example usage (before MED): python trimheaders.rm_lead_zeroes.py -f seqs.trimmed_filtered_250bp.fna -o /path/to/output/folder
+example usage (after MED):  python trimheaders.rm_lead.zeroes.py -m MATRIX-COUNT.txt -n NODE-REPRESENTATIVES.fasta -o /path/to/output/folder
 """
 
 import argparse
