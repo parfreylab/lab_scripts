@@ -1,7 +1,7 @@
 """
 This script does the following:
-1. remove extra information in the headers of FASTA files, and to format the rest for MED
-2. remove leading zeroes in transposed matrix count files or in the headers of FASTA files, or both simultaneously
+1. remove extra information in the headers of FASTA files, and to format the rest for MED (BEFORE MED)
+2. remove leading zeroes in transposed matrix count files or in the headers of FASTA files, or both simultaneously (AFTER MED)
 
 inputs:
 1. (optional) a trimmed FASTA file
@@ -11,7 +11,7 @@ inputs:
 
 outputs:
 1. a MED analysis ready FASTA file with headers properly formatted
-2. the transposed matrix count file and/or node representative sequences file with leading zeroes removed
+2. the transposed matrix count file and/or node representative sequences file with leading zeroes removed from MED output
 
 example usage (before MED): python trimheaders.rm_lead_zeroes.py -f seqs.trimmed_filtered_250bp.fna -o /path/to/output/folder
 example usage (after MED):  python trimheaders.rm_lead.zeroes.py -m MATRIX-COUNT.txt -n NODE-REPRESENTATIVES.fasta -o /path/to/output/folder
@@ -40,6 +40,7 @@ parser.add_argument(
 parser.add_argument(
 	"-o",
 	"--outputpath",
+	default = "./",
 	help = "Path to output directory, string. Default: current working directory.")
 
 args = parser.parse_args()
@@ -59,11 +60,9 @@ if trimmed_file is not None:
 	trimmed_file_base = os.path.basename(trimmed_file)
 	trimmed_file_base = os.path.splitext(trimmed_file_base)[0]
 
-	try: # try to create an outfile in the specified directory
-		completeName = os.path.join(out, trimmed_file_base + ".MED.fna")
-		trim_out = open(completeName, "w")
-	except AttributeError: # create an outfile in the current directory
-		trim_out = open((trimmed_file_base + ".MED.fna"), "w")
+	# join the output directory with the file to write. by default, output directory is current working directory
+	completeName = os.path.join(out, trimmed_file_base + ".MED.fna")
+	trim_out = open(completeName, "w")
 
 	with open(trimmed_file, "U") as f:
 		for i, line in enumerate(f):
@@ -91,11 +90,10 @@ if matrixfile is not None:
 	# getting filename of the input file without the extension
 	matrixfile_base = os.path.basename(matrixfile)
 	matrixfile_base = os.path.splitext(matrixfile_base)[0]
-	try: # try to create an outfile in the specified directory
-		matrix_path = os.path.join(out, matrixfile_base + ".transposed.txt")
-		matrix_out = open(matrix_path, "w")
-	except AttributeError: # create an outfile in the current directory
-		matrix_out = open((matrixfile_base + ".transposed.txt"), "w")
+
+	matrix_path = os.path.join(out, matrixfile_base + ".transposed.txt")
+	matrix_out = open(matrix_path, "w")
+
 	to_transpose = [] # initialize a list which will contain line information from matrix-count.txt
 	with open(matrixfile, "U") as f:
 		for i, line in enumerate(f):
@@ -120,11 +118,10 @@ if matrixfile is not None:
 if noderepfile is not None:
 	noderepfile_base = os.path.basename(noderepfile)
 	noderepfile_base = os.path.splitext(noderepfile_base)[0]
-	try:
-		node_path = os.path.join(out, noderepfile_base + ".DOWNSTREAM.fasta")
-		node_out = open(node_path, "w")
-	except AttributeError:
-		node_out = open((noderepfile_base + ".DOWNSTREAM.fasta"), "w")
+
+	node_path = os.path.join(out, noderepfile_base + ".DOWNSTREAM.fasta")
+	node_out = open(node_path, "w")
+	
 	with open(noderepfile, "U") as f:
 		for i, line in enumerate(f):
 			if line.startswith(">"): # if the line starts with '>', it is a header
