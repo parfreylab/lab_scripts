@@ -47,6 +47,7 @@ requiredargs.add_argument( # barcodefile. 515f_806r_illumina_primers_515barcoded
 parser.add_argument(       # outputpath. user defined. optional.
 	"-o",
 	"--outputpath",
+	default = "./",
 	help = "Path to where the output files will be saved, string. If unspecified, default is current working directory.")
 parser.add_argument( 	   # platenumber. user defined. optional.
 	"-p",
@@ -151,11 +152,8 @@ pcount = 0     # count for comma-delimited list of plates
 samplemap = {} # to store sample IDs 
 swabmap = {}   # to store swab IDs
 # start by opening metadata file w/ sample IDs. populate the metadata file w/ barcodes, barcode plate #, barcode well #
-try:
-	completeName = os.path.join(out, metadata_filename + ".barcodes_added.txt")
-	MDout = open(completeName, "w")      						   # create an outfile in the specified output directory
-except AttributeError:
-	MDout = open((metadata_filename + ".barcodes_added.txt"), "w") # create an outfile in the current working directory
+completeName = os.path.join(out, metadata_filename + ".barcodes_added.txt")
+MDout = open(completeName, "w")      						   # create an outfile in the specified output directory
 with open(metadatafile, "U") as METADATA:
 	for i, line in enumerate(METADATA):
 		data = line.strip() # remove all whitespace
@@ -252,14 +250,11 @@ print "finished printing new metadata file w/ barcodes, barcode plate #, and bar
 # conditional has same idea, different syntax depending on type of plate_num
 if type(plate_num) is int:
 	for num in range(int(updater(platenum, start_well)[0]), plate_num + 1): # for each plate starting on the plate number specified (default 1)
-		try:
-			completeName = os.path.join(out, "%s_sample_plate_num_%d.txt" % (project_name, num))
-			SAMPLEPLATEout = open(completeName, "w")   # create a platemap (to be filled in w/ sample IDs)
-			completeName = os.path.join(out, "%s_swab_plate_num_%d.txt" % (project_name, num))
-			SWABPLATEout = open(completeName, "w")     # create a platemap (to be filled in w/ swab IDs)
-		except AttributeError:
-			SAMPLEPLATEout = open("%s_sample_plate_num_%d.txt" % (project_name, num), "w")
-			SWABPLATEout = open("%s_swab_plate_num_%d.txt" % (project_name, num), "w")
+		completeName = os.path.join(out, "%s_sample_plate_num_%d.txt" % (project_name, num))
+		SAMPLEPLATEout = open(completeName, "w")   # create a platemap (to be filled in w/ sample IDs)
+		completeName = os.path.join(out, "%s_swab_plate_num_%d.txt" % (project_name, num))
+		SWABPLATEout = open(completeName, "w")     # create a platemap (to be filled in w/ swab IDs)
+		
 		SAMPLEPLATEout.write("Project_name:\t" + project_name + "\nPlate_#:\t" + str(num) + "\n")  # formatting first line to include plate name + plate number
 		SAMPLEPLATEout.write("\t"+ "\t".join(colnames) + "\n")							 # formatting second line to include all column numbers 1-12
 		SWABPLATEout.write("Project_name:\t" + project_name + "\nPlate_#:\t" + str(num) + "\n")
@@ -283,14 +278,11 @@ if type(plate_num) is int:
 			SWABPLATEout.write(toprint_swab + "\n")
 else:
 	for num in plate_num: # for each plate starting on the plate number specified (default 1)
-		try:
-			completeName = os.path.join(out, "%s_sample_plate_num_%s.txt" % (project_name, num))
-			SAMPLEPLATEout = open(completeName, "w")   # create a platemap (to be filled in w/ sample IDs)
-			completeName = os.path.join(out, "%s_swab_plate_num_%s.txt" % (project_name, num))
-			SWABPLATEout = open(completeName, "w")     # create a platemap (to be filled in w/ swab IDs)
-		except AttributeError:
-			SAMPLEPLATEout = open("%s_sample_plate_num_%s.txt" % (project_name, num), "w")
-			SWABPLATEout = open("%s_swab_plate_num_%s.txt" % (project_name, num), "w")
+		completeName = os.path.join(out, "%s_sample_plate_num_%s.txt" % (project_name, num))
+		SAMPLEPLATEout = open(completeName, "w")   # create a platemap (to be filled in w/ sample IDs)
+		completeName = os.path.join(out, "%s_swab_plate_num_%s.txt" % (project_name, num))
+		SWABPLATEout = open(completeName, "w")     # create a platemap (to be filled in w/ swab IDs)
+
 		SAMPLEPLATEout.write("Project_name:\t" + project_name + "\nPlate_#:\t" + num + "\n")  # formatting first line to include plate name + plate number
 		SAMPLEPLATEout.write("\t"+ "\t".join(colnames) + "\n")							 # formatting second line to include all column numbers 1-12
 		SWABPLATEout.write("Project_name:\t" + project_name + "\nPlate_#:\t" + num + "\n")
