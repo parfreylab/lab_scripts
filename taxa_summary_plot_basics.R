@@ -34,8 +34,7 @@ rawdata <- import_biom(file.path("relative/or/absolute/path/to/", "OTU_table.w_t
 rawmetadata <- read_delim(file = file.path("relative/or/absolute/path/to/", "metadata.complete.txt"), # file.path() is used for cross-platform compatibility
                           "\t", # the text file is tab delimited
                           escape_double = FALSE, # the imported text file does not 'escape' quotation marks by wrapping them with more quotation marks
-                          trim_ws = TRUE, # remove leading and trailing spaces from character string entries
-                          )
+                          trim_ws = TRUE) # remove leading and trailing spaces from character string entries
 
 # OPTIONAL: Read in the raw phylogenetic tree in .tre format, and store as a tree object called "rawtreedata"
 # file.path() is used for cross-platform compatibility
