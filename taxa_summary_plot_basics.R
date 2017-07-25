@@ -27,7 +27,8 @@ setwd("/path/to/working/directory")
 #### Load Required/Optional Files ####
 # REQUIRED: Read the raw data in .biom format, and store as a phylo_seq object called "rawdata"
 rawdata <- import_biom(file.path("relative/or/absolute/path/to/", "OTU_table.w_taxa.biom"), # file.path() is used for cross-platform compatibility
-                       parallel = TRUE) # use multiple processor cores for shorter read times
+                       parallel = TRUE,
+                       trim_ws = TRUE) # use multiple processor cores for shorter read times
 
 # REQUIRED: Read the raw metadata in .txt format, and store as a tibble (an improved dataframe) called "rawmetadata"
 rawmetadata <- read_delim(file = file.path("relative/or/absolute/path/to/", "metadata.complete.txt"), # file.path() is used for cross-platform compatibility
