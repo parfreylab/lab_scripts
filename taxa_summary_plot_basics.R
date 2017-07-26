@@ -37,6 +37,7 @@ rawmetadata <- read_delim(file = file.path("relative/or/absolute/path/to/", "met
                           trim_ws = TRUE) # remove leading and trailing spaces from character string entries
 
 # OPTIONAL: Read in the raw phylogenetic tree in .tre format, and store as a tree object called "rawtreedata"
+# IMPORTANT: TREE TIPS MUST MATCH OTU IDs FROM TAXA TABLE. THIS MEANS IF YOU ARE USING AN EPA PLACEMENT TREE, YOU MUST REMOVE "QUERY___" from each tree tip label BEFORE IMPORTING if you wish to use the tree in a phyloseq object
 # file.path() is used for cross-platform compatibility
 rawtreedata <- read_tree(file.path("tree", "16s_makephylo_fasttree.tre"))
 
