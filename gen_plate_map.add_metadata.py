@@ -27,6 +27,7 @@ import argparse
 import os
 import re
 from sys import exit
+from collections import defaultdict
 
 print "run: plate_map.add_metadata.py -h for help."
 print "\n"
@@ -151,6 +152,9 @@ if type(plate_num) is str: # change str to int to iterate through plates
 pcount = 0     # count for comma-delimited list of plates
 samplemap = {} # to store sample IDs 
 swabmap = {}   # to store swab IDs
+proj_map = defaultdict(list) # to store unique project names with plate numbers as keys. stores values as a list
+proj_title = [] # create a new list to store unique project names in metadata file
+oneTime = True
 # start by opening metadata file w/ sample IDs. populate the metadata file w/ barcodes, barcode plate #, barcode well #
 completeName = os.path.join(out, metadata_filename + ".barcodes_added.txt")
 MDout = open(completeName, "w")      						   # create an outfile in the specified output directory
@@ -167,6 +171,17 @@ with open(metadatafile, "U") as METADATA:
 			restofheader = all_in_line[2:] # rest of header column to print starting with project_name and person_responsible
 			MDout.write("#SampleID \t BarcodeSequence \t LinkerPrimerSequence \t swabID \t plate \t barcode_well \t" + "\t".join(restofheader) + "\n")
 		else:
+			if oneTime: # append the first project name only once. the rest of the project names will be appended when a new plate starts
+				if type(plate_num) is int:
+					proj_map[plate_num].append(project_name)
+				if type(plate_num) is list:
+					proj_map[plate_num[pcount]].append(project_name)
+				proj_title.append(project_name)
+				oneTime = False
+			if type(plate_num) is int and not project_name in proj_map[plate_num]: # if the project name isn't already in the associated plate
+				proj_map[plate_num].append(project_name)
+			if type(plate_num) is list and not project_name in proj_map[plate_num[pcount]]: # same for if plate_num is as list
+				proj_map[plate_num[pcount]].append(project_name)
 			blank_md = ["unknown" for md in resttoprint] # metadata columns for the blank rows. will be filled in with 'unknown'
 			if barcode_wells[well_pos] == 'D6': # if D6 is the current well
 				# write the blank1 line for D6
@@ -206,11 +221,13 @@ with open(metadatafile, "U") as METADATA:
 					if plate_num > 10: # if the plate number exceeds the maximum alloted
 						exit("The number of plates requested exceeded the maximum (10). Please specify a different starting plate number.")
 					MDout.write(sampleID +"\t"+ barcodemap[barcode_wells[well_pos] + "_" + str(plate_num)] +"\t"+ linkerprimerseq +"\t"+ swabID +"\t"+ str(plate_num) +"\t"+ barcode_wells[well_pos] +"\t"+ project_name +"\t"+ person_responsible +"\t"+ "\t".join(resttoprint) + "\n")
+					proj_title.append(project_name)
 					samplemap[barcode_wells[well_pos] + "_" + str(plate_num)] = sampleID 
 					swabmap[barcode_wells[well_pos] + "_" + str(plate_num)] = swabID
 				else: # if the plate number is not an int, it will be list
 					# write the blank2 line for well H12
 					MDout.write("blank2" +"\t"+ barcodemap[barcode_wells[well_pos] + "_" + plate_num[pcount]] +"\t"+ linkerprimerseq +"\t"+ 'none' +"\t"+ plate_num[pcount] +"\t"+ barcode_wells[well_pos] +"\t"+ project_name +"\t"+ person_responsible +"\t"+ "\t".join(blank_md) + "\n")
+					proj_title.append(project_name)
 					samplemap['H12_' + plate_num[pcount]] = 'blank2'
 					swabmap['H12_' + plate_num[pcount]] = 'blank2'		
 					well_pos = 0   	   # reset the counter
@@ -248,16 +265,17 @@ print "finished printing new metadata file w/ barcodes, barcode plate #, and bar
 # print new barcoded plates (sample IDs and swab IDs). each plate will have its own tab-delimited file. each plate will be printed out twice - once for sample IDs, once for swab IDs
 # each line is duplicated for sample and swab ID generation
 # conditional has same idea, different syntax depending on type of plate_num
+proj_iterator = 0
 if type(plate_num) is int:
 	for num in range(int(updater(platenum, start_well)[0]), plate_num + 1): # for each plate starting on the plate number specified (default 1)
-		completeName = os.path.join(out, "%s_sample_plate_num_%d.txt" % (project_name, num))
+		completeName = os.path.join(out, "%s_sample_plate_num_%d.txt" % (proj_title[proj_iterator], num))
 		SAMPLEPLATEout = open(completeName, "w")   # create a platemap (to be filled in w/ sample IDs)
-		completeName = os.path.join(out, "%s_swab_plate_num_%d.txt" % (project_name, num))
+		completeName = os.path.join(out, "%s_swab_plate_num_%d.txt" % (proj_title[proj_iterator], num))
 		SWABPLATEout = open(completeName, "w")     # create a platemap (to be filled in w/ swab IDs)
 		
-		SAMPLEPLATEout.write("Project_name:\t" + project_name + "\nPlate_#:\t" + str(num) + "\n")  # formatting first line to include plate name + plate number
+		SAMPLEPLATEout.write("Project_name:\t" + ",".join(proj_map[num]) + "\nPlate_#:\t" + str(num) + "\n")  # formatting first line to include plate name + plate number
 		SAMPLEPLATEout.write("\t"+ "\t".join(colnames) + "\n")							 # formatting second line to include all column numbers 1-12
-		SWABPLATEout.write("Project_name:\t" + project_name + "\nPlate_#:\t" + str(num) + "\n")
+		SWABPLATEout.write("Project_name:\t" + ",".join(proj_map[num]) + "\nPlate_#:\t" + str(num) + "\n")
 		SWABPLATEout.write("\t"+ "\t".join(colnames) + "\n")
 		for row in rownames:
 			SAMPLEPLATEout.write(row + "\t") # print each row name
@@ -276,16 +294,17 @@ if type(plate_num) is int:
 			toprint_swab = "\t".join(row_data_swab)
 			SAMPLEPLATEout.write(toprint_sample + "\n") # writing to output files
 			SWABPLATEout.write(toprint_swab + "\n")
+		proj_iterator += 1
 else:
 	for num in plate_num: # for each plate starting on the plate number specified (default 1)
-		completeName = os.path.join(out, "%s_sample_plate_num_%s.txt" % (project_name, num))
+		completeName = os.path.join(out, "%s_sample_plate_num_%s.txt" % (proj_title[proj_iterator], num))
 		SAMPLEPLATEout = open(completeName, "w")   # create a platemap (to be filled in w/ sample IDs)
-		completeName = os.path.join(out, "%s_swab_plate_num_%s.txt" % (project_name, num))
+		completeName = os.path.join(out, "%s_swab_plate_num_%s.txt" % (proj_title[proj_iterator], num))
 		SWABPLATEout = open(completeName, "w")     # create a platemap (to be filled in w/ swab IDs)
 
-		SAMPLEPLATEout.write("Project_name:\t" + project_name + "\nPlate_#:\t" + num + "\n")  # formatting first line to include plate name + plate number
+		SAMPLEPLATEout.write("Project_name:\t" + ",".join(proj_map[plate_num[proj_iterator]]) + "\nPlate_#:\t" + num + "\n")  # formatting first line to include plate name + plate number
 		SAMPLEPLATEout.write("\t"+ "\t".join(colnames) + "\n")							 # formatting second line to include all column numbers 1-12
-		SWABPLATEout.write("Project_name:\t" + project_name + "\nPlate_#:\t" + num + "\n")
+		SWABPLATEout.write("Project_name:\t" + ",".join(proj_map[plate_num[proj_iterator]]) + "\nPlate_#:\t" + num + "\n")
 		SWABPLATEout.write("\t"+ "\t".join(colnames) + "\n")
 		for row in rownames:
 			SAMPLEPLATEout.write(row + "\t") # print each row name
@@ -304,6 +323,7 @@ else:
 			toprint_swab = "\t".join(row_data_swab)
 			SAMPLEPLATEout.write(toprint_sample + "\n") # writing to output files
 			SWABPLATEout.write(toprint_swab + "\n")
+		proj_iterator += 1
 print "finished printing new platemap with sample IDs"
 print "finished printing new platemap with swab IDs too!"
 print "done!"
