@@ -69,7 +69,7 @@ rownames(metadata) <- metadata$`#SampleID`
 project_data <- merge_phyloseq(data, metadata, rawtreedata)
 
 # 8. modify Rank labels in taxa table
-colnames(tax_table(project_data)) <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+colnames(tax_table(project_data)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7")
 
 #### Quality and Taxa Filtering ####
 # 1. look at minimum, mean, and maximum sample counts, if desired
@@ -85,22 +85,22 @@ project_data <- prune_taxa(taxa_sums(project_data) >= 250, project_data)
 
 # 4. Remove mitochondrial and chloroplast OTUs
 project_data <- project_data %>%
-  subset_taxa(Family != "Mitochondria") %>%
-  subset_taxa(Class != "Chloroplast")
+  subset_taxa(Rank5 != "__Mitochondria") %>%
+  subset_taxa(Rank3 != "__Chloroplast")
 
 #### Create Plotting Objects ####
 # 1. reshape data based on taxonomic level you are interested in
 family_plot <- project_data %>%
-  tax_glom(taxrank = "Family") %>%                      # agglomerate at family level
+  tax_glom(taxrank = "Rank5") %>%                      # agglomerate at family level
   transform_sample_counts(function(x) {x/sum(x)} ) %>%  # Transform to rel. abundance
   psmelt() %>%                                          # Melt to long format
-  arrange(Family)
+  arrange(Rank5)
 
 # 2. make aesthetic changes to taxa rank labels, if desired:
-family_plot$Family <- str_replace_all(family_plot$Family, "__", "") # Remove underscores
-family_plot$Order <- str_replace_all(family_plot$Order, "__", "") # Remove underscores
-family_plot$Class <- str_replace_all(family_plot$Class, "__", "") # Remove underscores
-family_plot$Phylum <- str_replace_all(family_plot$Phylum, "__", "") # Remove underscores
+family_plot$Rank5 <- str_replace_all(family_plot$Rank5, "__", "") # Remove underscores
+family_plot$Rank4 <- str_replace_all(family_plot$Rank4, "__", "") # Remove underscores
+family_plot$Rank3 <- str_replace_all(family_plot$Rank3, "__", "") # Remove underscores
+family_plot$Rank2 <- str_replace_all(family_plot$Rank2, "__", "") # Remove underscores
 
 # 3. order levels you are interested in the way you would like them plotted. many ways to do this.
 family_plot$factor_N <- factor(family_plot$factor_N, levels = c("A", "B", "C", "1", "2", "3", "z", "y", "x", "w")) #method 1
@@ -110,7 +110,7 @@ family_plot$factor_N <- factor(family_plot$factor_N, levels = mylevels)
 
 #### Create Color Palette(s) ####
 # 1. identify the number of colors you need
-numcol <- length(unique(rat_family$Family))
+numcol <- length(unique(family_plot$Rank5))
 # 2. use a number seed to determine how qualpar samples your colors from its palette
 set.seed(15)
 # 3. use qualpalr colour palettes for easily distinguishing taxa
@@ -121,7 +121,7 @@ myPalette <- c("#00FFFF", "#56B4E9", "#000000", "#009E73", "#F0E442", "#E69F00",
 
 #### Make Plots ####
 #example plot showing relative abundance of taxa through timepoints (coded as "experiment_day"), with individuals grouped together (coded as "rat_name"), and animals in the same cage grouped together as well (coded as "cage")
-ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Family)) + 
+ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) + 
   facet_wrap(cage~rat_name, ncol=4, strip.position = "top") + #facet_wrap is the function for determining how plots are grouped within a multi-plot space
   theme_bw() +
   theme(strip.background = element_rect(fill="white")) + #these "theme" settings determine how the facet grid looks on the plot
@@ -135,7 +135,7 @@ ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Family)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.spacing = unit(0, "lines")) #another "theme" command. a lot of extra control can be established here. this line ensures that there is no padding in the multi-plot grid
 
 #similar example plot where the number of columns in the multi-plot is specified directly
-ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Family)) + 
+ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) + 
   facet_wrap(~ rat_name, ncol=10) + #here we only group the data by one factor, instead of two like the example above
   theme_bw() +
   theme(strip.background = element_rect(fill="white")) +
@@ -149,7 +149,7 @@ ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Family)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.spacing = unit(0, "lines"))
 
 #in this example the data is grouped in such a way that the relative abundances for each sample adds to the total height of the bar they are grouped into
-ggplot(rat_family, aes(x = experiment_day, y = Abundance, fill = Family)) + 
+ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) + 
   facet_wrap(~ infected) +
   theme_bw() +
   theme(strip.background = element_rect(fill="white")) +
@@ -163,7 +163,7 @@ ggplot(rat_family, aes(x = experiment_day, y = Abundance, fill = Family)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.spacing = unit(0, "lines"))
 
 #in this example the x axis labels are coloured by an additional colour palette #be careful with this setting, it may not apply the colors correctly. I have had better luck with a string of colors which I define manually, in the order I want them used in the plot.
-ggplot(rat_family, aes(x = rat_name, y = Abundance, fill = Family)) + 
+ggplot(family_plot, aes(x = rat_name, y = Abundance, fill = Rank5)) + 
   facet_grid(experiment_day~.) +
   theme_bw() +
   theme(strip.background = element_rect(fill="white"), axis.text.x = element_text(colour=myPalette)) +
@@ -175,7 +175,6 @@ ggplot(rat_family, aes(x = rat_name, y = Abundance, fill = Family)) +
   xlab("Experiment Day") +
   ggtitle("Taxonomic Composition of Rat Gut Bacterial Communities Grouped by Experiment Day ~ Individual") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.spacing = unit(0, "lines"))
-
 
 #### Print Plots to PDF ####
 pdf("Taxa_summary.cage~individual.pdf", #name of file to print. can also include relative or absolute path before filename.
