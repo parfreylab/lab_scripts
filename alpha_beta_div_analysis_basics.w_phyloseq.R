@@ -58,6 +58,14 @@ project_data <- prune_taxa(taxa_sums(project_data) >= 250, project_data)
 project_data <- project_data %>%
   subset_taxa(Rank5 != "__Mitochondria") %>% 
   subset_taxa(Rank3 != "__Chloroplast")
+# Remove unassigned taxa
+project_data <- project_data %>%
+  subset_taxa(Rank1 != "Unassigned") #works as long as your OTUs without a taxonomy assignment are labeled as "Unassigned". adjust accordingly.
+# Remove counts that represent less than 0.01% of the total for each sample
+project_data.rel_abundance = transform_sample_counts(project_data, function(x) x/sum(x)) #transform to relative abundance
+otu <- as.data.frame(otu_table(project_data.rel_abundance)) #get OTU table
+otu_table(project_data)[otu < 0.0001] <- 0 #for entries where the relative abundance of an OTU in a sample is less than 0.01%, set the raw read count to 0
+
 # OPTIONAL: modify Rank labels in taxa table (check the colnames of the tax_table(project_data) object to see if you want to change them)
 colnames(tax_table(project_data)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7")
 
