@@ -130,7 +130,7 @@ if noderepfile is not None:
 				match = re.match(r"(>0+)(\d*)", data[0]) # match the first element of the list containing sample IDs
 				if match:
 					sample_id_format = match.groups()[1] # the sample ID with leading zeroes removed
-					node_out.write(">" + sample_id_format + "|" + data[1] + "\n") # write the header line with formatted sample IDs out
+					node_out.write(">" + sample_id_format + "\n") # write the header line with formatted sample IDs out
 			else: # if the line is a sequence, copy and paste!
 				node_out.write(line)			
 	print "successfully removed leading zeroes from node rep file!"		
