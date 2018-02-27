@@ -31,7 +31,7 @@ requiredargs.add_argument( #gridfile argument. user defined.
 requiredargs.add_argument( #barcodefile. 515f_806r_illumina_primers_515barcoded.txt
 	"-b",
 	"--barcodefile",
-	help = "Path to barcode file, string. This is the lab's barcode spreadsheet. Can be found on in the botany shared disk space. Ask on the lab Slack if you don't know where to find it.",
+	help = "Path to barcode file, string. This is the lab's barcode spreadsheet. Can be found on the lab's github repo. Ask on the lab Slack if you don't know where to find it.",
 	required = True)
 requiredargs.add_argument( #metadatafile. user defined.
 	"-m",
