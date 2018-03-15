@@ -38,6 +38,25 @@ rawmetadata <- read_delim(file = file.path("/file/path/", "metadata.txt"), # fil
                           escape_double = FALSE, # the imported text file does not 'escape' quotation marks by wrapping them with more quotation marks
                           trim_ws = TRUE) # remove leading and trailing spaces from character string entries
 
+# IMPORTANT: ROW NAMES OF THE RAW METADATA FILE MUST MATCH SAMPLE NAMES FROM THE OTU TABLE. IF NOT, THE PHYLOSEQ OBJECT WILL NOT BE MERGED PROPERLY AND NON-MATCHING IDS WILL BE THROWN OUT
+# RECOMMENDED: preserve a list of samples that are unique to the OTU table and metadata file to make sure there aren't unexpected differences
+# NOTE: change MY_SAMPLE_IDs to match the column where sample IDs are stored in the metadata file. in QIIME compatible metadata files, these will be under `#SampleID`
+notinmeta <- setdiff(sample_names(rawdata), rawmetadata$MY_SAMPLE_IDs)
+# if there are any samples in "notinmeta", remove these samples from the raw data
+allsamples <- sample_names(rawdata)
+allsamples <- allsamples[!(allsamples %in% notinmeta)]
+biomdata <- prune_samples(allsamples, rawdata)
+# Find all samples in raw metadata that are not in raw data
+notinraw <- setdiff(rawmetadata$MY_SAMPLE_IDs, sample_names(rawdata))
+# Remove these samples from the metadata
+metadata <- filter(rawmetadata, !(MY_SAMPLE_IDs %in% notinraw))
+# Create vector consisting of ALL removed samples; useful for record-keeping
+symmdiff <- c(notinmeta, notinraw)
+# Format metadata tibble into the phyloseq metadata format
+metadata <- sample_data(metadata)
+# Add rownames to the phyloseq metadata which correspond to the OTU IDs
+rownames(metadata) <- metadata$MY_SAMPLE_IDs
+
 # OPTIONAL: Read in a phylogenetic tree in .tre format, and store as a tree object called "rawtreedata"
 # IMPORTANT: TREE TIPS MUST MATCH OTU IDs FROM TAXA TABLE. THIS MEANS IF YOU ARE USING AN EPA PLACEMENT TREE, YOU MUST REMOVE "QUERY___" from each tree tip label BEFORE IMPORTING if you wish to use the tree in a phyloseq object
 # file.path() is used for cross-platform compatibility
@@ -46,7 +65,7 @@ rawtreedata <- read_tree(file.path("/file/path", "phylo_tree.tre"))
 #IMPORTANT NOTE: at this point you should make sure your sample IDs in the data, metadata, and tree data objects match
 
 #### OPTIONAL: drop unwanted levels from metadata now, before converting to phyloseq ####
-rawmetadata <- rawmetadata[which(rawmetadata$variable != "value"), ] #works with factor-formatted or continuous variables
+metadata <- metadata[which(metadata$SOME_VARIABLE != "UNWANTED VALUE"), ] #works with factor-formatted or continuous variables
 #### create phyloseq object with completed metadata, otu table, and tree ####
 project_data <- merge_phyloseq(data, metadata, rawtreedata)
 #filtering steps, if not already done before loading into R
