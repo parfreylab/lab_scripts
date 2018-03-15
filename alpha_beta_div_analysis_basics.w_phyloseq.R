@@ -159,7 +159,7 @@ pdf("NMDS.expt_name.FACTOR_1_color.FACTOR_2_shape.pdf"
     , width = 16 # Default is 7
     , height = 9 # Change to 10; make it taller
 )
-p <- ggplot(NMDS.sort, aes(x=NMDS.bray1, y=NMDS.bray2, shape = FACTOR_2, color = FACTOR_1))
+p <- ggplot(NMDS, aes(x=NMDS.bray1, y=NMDS.bray2, shape = FACTOR_2, color = FACTOR_1)) # change the first argument to NMDS.sort if the optional command was ran
 p + geom_point(size=4) + scale_shape_manual(values=1:nlevels(NMDS.sort$FACTOR_2)) +
   labs(title="NMDS Factor1 & Factor2") + 
   scale_fill_manual(values=cbPalette) + scale_colour_manual(values=cbPalette) +
