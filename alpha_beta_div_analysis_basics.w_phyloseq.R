@@ -67,7 +67,7 @@ rawtreedata <- read_tree(file.path("/file/path", "phylo_tree.tre"))
 #### OPTIONAL: drop unwanted levels from metadata now, before converting to phyloseq ####
 metadata <- metadata[which(metadata$SOME_VARIABLE != "UNWANTED VALUE"), ] #works with factor-formatted or continuous variables
 #### create phyloseq object with completed metadata, otu table, and tree ####
-project_data <- merge_phyloseq(data, metadata, rawtreedata)
+project_data <- merge_phyloseq(biomdata, metadata, rawtreedata)
 #filtering steps, if not already done before loading into R
 #filter out samples with less than 1000 reads (arbitrary threshold, choose your own)
 project_data <- prune_samples(sample_sums(project_data) >= 1000, project_data) 
@@ -94,20 +94,21 @@ summary(sample_sums(project_data))
 
 #found rarefaction curve function here: https://github.com/mahendra-mariadassou/phyloseq-extended (richness.R) 
 #to use this you have to load the "ggrare" function in from richness.R #it will throw errors if you are labeling with groups that have too few categories
+source("/path/to/phyloseq-extended/R/richness.R") # load in ggrare function
 p <- ggrare(project_data, step = 1000, color = "factor", se = FALSE)
-p + facet_wrap(~factor1 + factor2)
+p + facet_wrap(~FACTOR_1 + FACTOR_2)
 #you can use the plot above to judge a rough cutoff for rarefaction. you can also do this with QIIME's alpha rarefaction script
 
-#you can use which like the example below to see which samples you'll lose for a given cutoff value
+#you can use the "which" command like the example below to see which samples you'll lose for a given cutoff value
 which(sample_sums(project_data) < 20000)
 
 #### rarefy data ####
 set.seed(24) #you must set a numerical seed like this for reproducibility
 project_data.rarefied <- rarefy_even_depth(project_data, sample.size = min(sample_sums(project_data)))
 
-#### Creat Colour Palettes ####
+#### Create Colour Palettes ####
 # 1. identify the number of colors you need from the factor you want to plot by
-numcol <- length(unique(sample_data(project_data)$factor1)) #EXAMPLE ONLY, adjust per object being plotted
+numcol <- length(unique(sample_data(project_data)$FACTOR_1)) #EXAMPLE ONLY, adjust per object being plotted
 # 2. use a number seed to determine how qualpar samples your colors from its palette
 set.seed(13)
 # 3. use qualpalr colour palettes for easily distinguishing taxa
@@ -122,7 +123,7 @@ pdf("AlphaDiversity.chao1.factor.experiment_name.pdf", #name of file to print. c
     width = 16, height = 9)# define plot width and height. completely up to user.
 p <- plot_richness(project_data.rarefied, x="factor", color = "factor", measures=c("Chao1"))
 p + geom_boxplot(outlier.colour = "red", outlier.shape = 13) + 
-  facet_grid(~ factor2) + #use this to divide data into separate plots based on a factor/variable
+  facet_grid(~ FACTOR_2) + #use this to divide data into separate plots based on a factor/variable
   theme(strip.background = element_rect(fill="white"), strip.placement = "bottom") +
   theme(strip.text = element_text(colour = 'black')) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
@@ -151,27 +152,27 @@ row.names(bray) == row.names(NMDS) #sanity check #tests as true
 NMDS$NMDS.bray1 <- bray$MDS1
 NMDS$NMDS.bray2 <- bray$MDS2
 #OPTIONAL: sort data for better looking easier to read plots
-NMDS.sort <- NMDS[order(NMDS$factor1, NMDS$factor2),]
+NMDS.sort <- NMDS[order(NMDS$FACTOR_1, NMDS$FACTOR_2),]
 
-#plain NMDS plot colored by "factor1" and shaped by "factor2"
-pdf("NMDS.expt_name.factor1_color.factor2_shape.pdf"
+#plain NMDS plot colored by "FACTOR_1" and shaped by "FACTOR_2"
+pdf("NMDS.expt_name.FACTOR_1_color.FACTOR_2_shape.pdf"
     , width = 16 # Default is 7
     , height = 9 # Change to 10; make it taller
 )
-p <- ggplot(NMDS.sort, aes(x=NMDS.bray1, y=NMDS.bray2, shape = factor2, color = factor1))
-p + geom_point(size=4) + scale_shape_manual(values=1:nlevels(NMDS.sort$factor2)) +
+p <- ggplot(NMDS.sort, aes(x=NMDS.bray1, y=NMDS.bray2, shape = FACTOR_2, color = FACTOR_1))
+p + geom_point(size=4) + scale_shape_manual(values=1:nlevels(NMDS.sort$FACTOR_2)) +
   labs(title="NMDS Factor1 & Factor2") + 
   scale_fill_manual(values=cbPalette) + scale_colour_manual(values=cbPalette) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 dev.off()
 
 #facet wrapped NMDS plot
-pdf("NMDS.expt_name.factor1~factor2.pdf"
+pdf("NMDS.expt_name.FACTOR_1~FACTOR_2.pdf"
     , width = 16 # Default is 7
     , height = 8 # Change to 10; make it taller
 )
-p <- ggplot(NMDS.sort, aes(x=NMDS.bray1, y=NMDS.bray2, color = factor3, shape = factor2))
-p + facet_wrap(~factor1) + geom_point(size=4) +
+p <- ggplot(NMDS.sort, aes(x=NMDS.bray1, y=NMDS.bray2, color = FACTOR_3, shape = FACTOR_2))
+p + facet_wrap(~FACTOR_1) + geom_point(size=4) +
   theme(strip.background = element_rect(fill="white"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.spacing = unit(0.2, "lines")) +
   labs(title="NMDS Factor2 & Factor3 ~ Factor1") + 
   scale_fill_manual(values=cbPalette) + scale_colour_manual(values=cbPalette) +
