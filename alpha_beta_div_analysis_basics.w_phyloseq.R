@@ -69,7 +69,7 @@ metadata <- metadata[which(metadata$SOME_VARIABLE != "UNWANTED VALUE"), ] #works
 #### create phyloseq object with completed metadata, otu table, and tree ####
 project_data <- merge_phyloseq(biomdata, metadata, rawtreedata)
 #filtering steps, if not already done before loading into R
-#filter out samples with less than 1000 reads (arbitrary threshold, choose your own)
+#filter out samples with less than 1000 reads (arbitrary threshold and generally the minimum, choose your own)
 project_data <- prune_samples(sample_sums(project_data) >= 1000, project_data) 
 # Remove OTUs with less than N total reads. (N = 250 in example) 
 project_data <- prune_taxa(taxa_sums(project_data) >= 250, project_data)
