@@ -128,7 +128,8 @@ ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) +
   theme(strip.text = element_text(colour = 'black')) +
   geom_bar(stat = "identity", width = 1.0) + #geom_bar controls the bar plots themselves
   scale_y_continuous(expand = c(0.005,0.005)) + #this controls the y axis scale, for bigger margins above and below, increase the numbers provided
-  scale_fill_manual(values = newpal$hex) + #here's where to use the color palate derived above
+  scale_fill_manual(values = newpal$hex) + #here's where to use the color palate derived above #NOTE: to preserve colors between plots, you must use the line below
+  scale_fill_manual(values = c("clade1" = "#333BFF",  "clade2"="#BBB3FF",  "clade3" = "#CC6600" ,  "etc."="#9633FF")) #NOTE: use this to manually assign color to each clade, or use it in multiple plots to make colors uniform across many plots
   ylab("Relative Abundance") + #x and y axis labels
   xlab("Experiment Day") +
   ggtitle("Taxonomic Composition of Rat Gut Bacterial Communities Grouped by Cage ~ Individual") + #plot title

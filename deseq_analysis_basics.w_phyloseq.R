@@ -115,7 +115,8 @@ pdf("differentially_present_taxa.variable3.pdf", #name of file to print. can als
     width = 10, # define plot width and height. completely up to user.
     height = 8)
 ggplot(res_p_ordered_wtaxa.var3, aes(x=Rank6, y=log2FoldChange, color=Rank3)) + geom_point(size=6) + 
-  scale_fill_manual(values = newpal$hex) +
+  scale_color_manual(values = newpal$hex) + #NOTE: to preserve colors between plots, you must use the line below
+  scale_color_manual(values = c("clade1" = "#333BFF",  "clade2"="#BBB3FF",  "clade3" = "#CC6600" ,  "etc."="#9633FF")) #NOTE: use this to manually assign color to each clade, or use it in multiple plots to make colors uniform across many plots
   ggtitle("Differentially Abundant Taxa WRT variable3, My Experiment Name") +
   theme(axis.text.x = element_text(angle = -45, hjust = 0))
 dev.off()
