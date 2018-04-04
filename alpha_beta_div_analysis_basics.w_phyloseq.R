@@ -87,10 +87,10 @@ project_data <- project_data %>%
 
 # Preserve unassigned taxa
 project_data.unassigned <- project_data %>%
-  subset_taxa(Rank1 == "Unassigned") 
+  subset_taxa(Rank1 == "Unassigned") #works as long as your OTUs without a taxonomy assignment are labeled as "Unassigned". adjust accordingly.
 # Remove unassigned taxa
 project_data <- project_data %>%
-  subset_taxa(Rank1 != "Unassigned") #works as long as your OTUs without a taxonomy assignment are labeled as "Unassigned". adjust accordingly.
+  subset_taxa(Rank1 != "Unassigned")
 # Remove counts that represent less than 0.01% of the total for each sample
 project_data.rel_abundance = transform_sample_counts(project_data, function(x) x/sum(x)) #transform to relative abundance
 otu <- as.data.frame(otu_table(project_data.rel_abundance)) #get OTU table
