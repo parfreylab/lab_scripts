@@ -1,4 +1,6 @@
 #basic procedure for loading in a .biom file, processing data with phyloseq, doing diversity analyses
+#NOTE: THIS SCRIPT IS MEANT TO BE CHANGED TO FIT YOUR DATA. PLEASE REMEMBER TO CHANGE ALL GENERALIZED PARAMETERS/VARIABLES
+# (EX: "FACTOR_1") TO MATCH YOUR DATA
 
 #### load libraries ####
 #you must install these first if you want to load the data in using phyloseq and process with deseq
@@ -73,10 +75,19 @@ project_data <- merge_phyloseq(biomdata, metadata, rawtreedata)
 project_data <- prune_samples(sample_sums(project_data) >= 1000, project_data) 
 # Remove OTUs with less than N total reads. (N = 250 in example) 
 project_data <- prune_taxa(taxa_sums(project_data) >= 250, project_data)
-# Remove mitochondrial and chloroplast OTUs #IMPORTANT: make sure that the filter terms will work with your taxonomy strings, and ranks
+# 16S ONLY: Remove mitochondrial and chloroplast OTUs #IMPORTANT: make sure that the filter terms will work with your taxonomy strings, and ranks
 project_data <- project_data %>%
   subset_taxa(Rank5 != "__Mitochondria") %>% 
   subset_taxa(Rank3 != "__Chloroplast")
+
+# 18S (and optional for 16S): Remove unwanted clades 
+project_data <- project_data %>%
+  subset_taxa(Rank5 != "UNWANTED_HOST_FAMILY") %>% 
+  subset_taxa(Rank7 != "UNWANTED_CLADE")
+
+# Preserve unassigned taxa
+project_data.unassigned <- project_data %>%
+  subset_taxa(Rank1 == "Unassigned") 
 # Remove unassigned taxa
 project_data <- project_data %>%
   subset_taxa(Rank1 != "Unassigned") #works as long as your OTUs without a taxonomy assignment are labeled as "Unassigned". adjust accordingly.
@@ -96,6 +107,7 @@ summary(sample_sums(project_data))
 #to use this you have to load the "ggrare" function in from richness.R #it will throw errors if you are labeling with groups that have too few categories
 source("/path/to/phyloseq-extended/R/richness.R") # load in ggrare function
 p <- ggrare(project_data, step = 1000, color = "factor", se = FALSE)
+# OPTIONAL: facet_wrap the plot
 p + facet_wrap(~FACTOR_1 + FACTOR_2)
 #you can use the plot above to judge a rough cutoff for rarefaction. you can also do this with QIIME's alpha rarefaction script
 
