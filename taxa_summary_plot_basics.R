@@ -2,8 +2,9 @@
 ##General Framework for Making Taxa Summary Plots from a QIIME-formatted .biom File##
 #####################################################################################
 #recommend using RStudio for this
-#NOTE: THIS SCRIPT IS MEANT TO BE CHANGED TO FIT YOUR DATA. PLEASE REMEMBER TO CHANGE ALL GENERALIZED PARAMETERS/VARIABLES
-# (EX: "FACTOR_1") TO MATCH YOUR DATA
+#NOTE: THIS SCRIPT IS MEANT TO BE CHANGED TO FIT YOUR DATA. PLEASE REMEMBER TO:
+#       1. MAKE A COPY OF THIS SCRIPT INTO YOUR WORKING DIRECTORY
+#       2. CHANGE ALL GENERALIZED PARAMETERS/VARIABLES (EX: "FACTOR_1") TO MATCH YOUR DATA
 
 #### Load R Packages #### #you must install these first if you want to make the plots with ggplot, and load the data in using phyloseq
 library(tidyverse)
