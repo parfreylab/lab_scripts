@@ -2,6 +2,9 @@
 ##General Framework for Making Taxa Summary Plots from a QIIME-formatted .biom File##
 #####################################################################################
 #recommend using RStudio for this
+#NOTE: THIS SCRIPT IS MEANT TO BE CHANGED TO FIT YOUR DATA. PLEASE REMEMBER TO:
+#       1. MAKE A COPY OF THIS SCRIPT INTO YOUR WORKING DIRECTORY
+#       2. CHANGE ALL GENERALIZED PARAMETERS/VARIABLES (EX: "FACTOR_1") TO MATCH YOUR DATA
 
 #### Load R Packages #### #you must install these first if you want to make the plots with ggplot, and load the data in using phyloseq
 library(tidyverse)
@@ -83,10 +86,22 @@ project_data <- prune_samples(sample_sums(project_data) >= 1000, project_data)
 # 3. Remove OTUs with less than N total reads. (N = 250 in example) 
 project_data <- prune_taxa(taxa_sums(project_data) >= 250, project_data) 
 
-# 4. Remove mitochondrial and chloroplast OTUs
+# 4a. 16s ONLY: Remove mitochondrial and chloroplast OTUs
 project_data <- project_data %>%
   subset_taxa(Rank5 != "__Mitochondria") %>%
   subset_taxa(Rank3 != "__Chloroplast")
+
+# 4b. 18S (and optional for 16S): Remove unwanted clades 
+project_data <- project_data %>%
+  subset_taxa(Rank5 != "UNWANTED_HOST_FAMILY") %>% 
+  subset_taxa(Rank7 != "UNWANTED_CLADE")
+
+# 5a. Preserve unassigned taxa
+project_data.unassigned <- project_data %>%
+  subset_taxa(Rank1 == "Unassigned") #works as long as your OTUs without a taxonomy assignment are labeled as "Unassigned". adjust accordingly.
+# 5b. Remove unassigned taxa
+project_data <- project_data %>%
+  subset_taxa(Rank1 != "Unassigned")
 
 #### Create Plotting Objects ####
 # 1. reshape data based on taxonomic level you are interested in

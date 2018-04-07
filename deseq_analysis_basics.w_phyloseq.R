@@ -1,4 +1,7 @@
 #basic procedure for loading in a .biom file, processing data with DeSeq2
+#NOTE: THIS SCRIPT IS MEANT TO BE CHANGED TO FIT YOUR DATA. PLEASE REMEMBER TO:
+#       1. MAKE A COPY OF THIS SCRIPT INTO YOUR WORKING DIRECTORY
+#       2. CHANGE ALL GENERALIZED PARAMETERS/VARIABLES (EX: "FACTOR_1") TO MATCH YOUR DATA
 
 #### load libraries ####
 #you must install these first if you want to load the data in using phyloseq and process with deseq
@@ -38,6 +41,25 @@ rawmetadata <- read_delim(file = file.path("/file/path/", "metadata.txt"), # fil
                           escape_double = FALSE, # the imported text file does not 'escape' quotation marks by wrapping them with more quotation marks
                           trim_ws = TRUE) # remove leading and trailing spaces from character string entries
 
+# IMPORTANT: ROW NAMES OF THE RAW METADATA FILE MUST MATCH SAMPLE NAMES FROM THE OTU TABLE. IF NOT, THE PHYLOSEQ OBJECT WILL NOT BE MERGED PROPERLY AND NON-MATCHING IDS WILL BE THROWN OUT
+# RECOMMENDED: preserve a list of samples that are unique to the OTU table and metadata file to make sure there aren't unexpected differences
+# NOTE: change MY_SAMPLE_IDs to match the column where sample IDs are stored in the metadata file. in QIIME compatible metadata files, these will be under `#SampleID`
+notinmeta <- setdiff(sample_names(rawdata), rawmetadata$MY_SAMPLE_IDs)
+# if there are any samples in "notinmeta", remove these samples from the raw data
+allsamples <- sample_names(rawdata)
+allsamples <- allsamples[!(allsamples %in% notinmeta)]
+biomdata <- prune_samples(allsamples, rawdata)
+# Find all samples in raw metadata that are not in raw data
+notinraw <- setdiff(rawmetadata$MY_SAMPLE_IDs, sample_names(rawdata))
+# Remove these samples from the metadata
+metadata <- filter(rawmetadata, !(MY_SAMPLE_IDs %in% notinraw))
+# Create vector consisting of ALL removed samples; useful for record-keeping
+symmdiff <- c(notinmeta, notinraw)
+# Format metadata tibble into the phyloseq metadata format
+metadata <- sample_data(metadata)
+# Add rownames to the phyloseq metadata which correspond to the OTU IDs
+rownames(metadata) <- metadata$MY_SAMPLE_IDs
+
 # OPTIONAL: Read in a phylogenetic tree in .tre format, and store as a tree object called "rawtreedata"
 # IMPORTANT: TREE TIPS MUST MATCH OTU IDs FROM TAXA TABLE. THIS MEANS IF YOU ARE USING AN EPA PLACEMENT TREE, YOU MUST REMOVE "QUERY___" from each tree tip label BEFORE IMPORTING if you wish to use the tree in a phyloseq object
 # file.path() is used for cross-platform compatibility
@@ -52,10 +74,22 @@ project_data <- merge_phyloseq(data, metadata, rawtreedata)
 project_data <- prune_samples(sample_sums(project_data) >= 1000, project_data) 
 # Remove OTUs with less than N total reads. (N = 250 in example) 
 project_data <- prune_taxa(taxa_sums(project_data) >= 250, project_data)
-# Remove mitochondrial and chloroplast OTUs #IMPORTANT: make sure that the filter terms will work with your taxonomy strings, and ranks
+# 16S ONLY: Remove mitochondrial and chloroplast OTUs #IMPORTANT: make sure that the filter terms will work with your taxonomy strings, and ranks
 project_data <- project_data %>%
   subset_taxa(Rank5 != "__Mitochondria") %>% 
   subset_taxa(Rank3 != "__Chloroplast")
+
+# 18S (and optional for 16S): Remove unwanted clades
+project_data <- project_data %>%
+  subset_taxa(Rank5 != "UNWANTED_HOST_FAMILY") %>% 
+  subset_taxa(Rank7 != "UNWANTED_CLADE")
+
+# Preserve unassigned taxa
+project_data.unassigned <- project_data %>%
+  subset_taxa(Rank1 == "Unassigned") #works as long as your OTUs without a taxonomy assignment are labeled as "Unassigned". adjust accordingly.
+# Remove unassigned taxa
+project_data <- project_data %>%
+  subset_taxa(Rank1 != "Unassigned")
 # OPTIONAL: modify Rank labels in taxa table (check the colnames of the tax_table(project_data) object to see if you want to change them)
 colnames(tax_table(project_data)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7")
 
