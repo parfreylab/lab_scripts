@@ -101,7 +101,7 @@ colnames(tax_table(project_data)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank
 #OPTIONAL/IF NEEDED:assign variables as either factors or numeric
 #this can be necesssary for certain types of data, and helpful if you want to control the order of factors in a deseq contrast below
 sample_data(project_data)$variable <- as.numeric(sample_data(project_data)$variable)
-sample_data(project_data)$variable3 <- as.factor(sample_data(project_data)$variable3, levels=c("level1", "level2"))
+sample_data(project_data)$variable3 <- factor(sample_data(project_data)$variable3, levels=c("level1", "level2"))
 ##deseq##
 #parameters up front
 alpha <- 0.01 #your significance threshold for MULTIPLE TEST CORRECTED pvals
