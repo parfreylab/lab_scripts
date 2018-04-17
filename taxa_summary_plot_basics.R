@@ -45,63 +45,51 @@ rawmetadata <- read_delim(file = file.path("relative/or/absolute/path/to/", "met
 rawtreedata <- read_tree(file.path("tree", "16s_makephylo_fasttree.tre"))
 
 #### Initial Data Processing ####
-# 1. Find all samples in raw data that are not in raw metadata
-notinmeta <- setdiff(sample_names(rawdata), rawmetadata$`#SampleID`)
-
-# 2. if there are any samples in "notinmeta", remove these samples from the raw data
-allsamps <- sample_names(rawdata)
-allsamps <- allsamps[!(allsamps %in% notinmeta)]
-data <- prune_samples(allsamps, rawdata)
-
-# 3a. Find all samples in raw metadata that are not in raw data
-notinraw <- setdiff(rawmetadata$`#SampleID`, sample_names(rawdata))
-
-# 3b. Remove these samples from the metadata
-metadata <- filter(rawmetadata, !(`#SampleID` %in% notinraw))
-
-# 4. Create vector consisting of ALL removed samples; useful for record-keeping
+notinmeta <- setdiff(sample_names(rawdata), rawmetadata$MY_SAMPLE_IDs)
+# if there are any samples in "notinmeta", remove these samples from the raw data
+allsamples <- sample_names(rawdata)
+allsamples <- allsamples[!(allsamples %in% notinmeta)]
+biomdata <- prune_samples(allsamples, rawdata)
+# Find all samples in raw metadata that are not in raw data
+notinraw <- setdiff(rawmetadata$MY_SAMPLE_IDs, sample_names(rawdata))
+# Remove these samples from the metadata
+metadata <- filter(rawmetadata, !(MY_SAMPLE_IDs %in% notinraw))
+# Create vector consisting of ALL removed samples; useful for record-keeping
 symmdiff <- c(notinmeta, notinraw)
-
-# 5. Format metadata tibble into the phyloseq metadata format
+# Format metadata tibble into the phyloseq metadata format
 metadata <- sample_data(metadata)
+# Add rownames to the phyloseq metadata which correspond to the OTU IDs
+rownames(metadata) <- metadata$MY_SAMPLE_IDs
 
-# 6. Add rownames to the phyloseq metadata which correspond to the OTU IDs
-rownames(metadata) <- metadata$`#SampleID`
-
-# 7. merge raw data, metadata, and tree data into single phyloseq object
-project_data <- merge_phyloseq(data, metadata, rawtreedata)
-
-# 8. modify Rank labels in taxa table
-colnames(tax_table(project_data)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7")
-
-#### Quality and Taxa Filtering ####
-# 1. look at minimum, mean, and maximum sample counts, if desired
-smin <- min(sample_sums(project_data))
-smean <- mean(sample_sums(project_data))
-smax <- max(sample_sums(project_data))
-
-# 2. Remove samples with less than N reads. (N = 1000 in example) 
-project_data <- prune_samples(sample_sums(project_data) >= 1000, project_data)
-
-# 3. Remove OTUs with less than N total reads. (N = 250 in example) 
-project_data <- prune_taxa(taxa_sums(project_data) >= 250, project_data) 
-
-# 4a. 16s ONLY: Remove mitochondrial and chloroplast OTUs
+#### create phyloseq object with completed metadata, otu table, and tree ####
+project_data <- merge_phyloseq(biomdata, metadata, rawtreedata)
+#filtering steps, if not already done before loading into R
+#filter out samples with less than 1000 reads (arbitrary threshold and generally the minimum, choose your own, use sample_counts() to look at distribution of read counts per sample)
+project_data <- prune_samples(sample_sums(project_data) >= 1000, project_data) 
+# Remove OTUs with less than N total reads. (N = 250 in example) 
+project_data <- prune_taxa(taxa_sums(project_data) >= 250, project_data)
+# 16S ONLY: Remove mitochondrial and chloroplast OTUs #IMPORTANT: make sure that the filter terms will work with your taxonomy strings, and ranks
 project_data <- project_data %>%
-  subset_taxa(Rank5 != "__Mitochondria") %>%
+  subset_taxa(Rank5 != "__Mitochondria") %>% 
   subset_taxa(Rank3 != "__Chloroplast")
 
-# 4b. 18S (and optional for 16S): Remove unwanted clades 
+# 18S (and optional for 16S): Remove unwanted clades 
 project_data <- project_data %>%
   subset_taxa(Rank5 != "UNWANTED_HOST_FAMILY") %>% 
   subset_taxa(Rank7 != "UNWANTED_CLADE")
 
-# 5a. Preserve unassigned taxa
+# Preserve unassigned taxa
 project_data.unassigned <- project_data %>%
   subset_taxa(Rank1 == "Unassigned") #works as long as your OTUs without a taxonomy assignment are labeled as "Unassigned". adjust accordingly.
-# 5b. Remove unassigned taxa
+# Remove unassigned taxa
 project_data <- project_data %>%
   subset_taxa(Rank1 != "Unassigned")
+# Remove counts that may represent noise, use a threshold (we are using a threshod of 2 reads for most datasets. be sure to choose the correct value for your own data.)
+otu <- as.data.frame(otu_table(project_data)) #get OTU table
+otu_table(project_data)[otu <= 2] <- 0 #for entries where the raw abundance of an OTU in a sample is less than N (N=2 in the example), set the raw read count to 0
+
+# OPTIONAL: modify Rank labels in taxa table (check the colnames of the tax_table(project_data) object to see if you want to change them)
+colnames(tax_table(project_data)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7")
 
 #### Create Plotting Objects ####
 # 1. reshape data based on taxonomic level you are interested in

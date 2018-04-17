@@ -68,9 +68,9 @@ rawtreedata <- read_tree(file.path("/file/path", "phylo_tree.tre"))
 #IMPORTANT NOTE: at this point you should make sure your sample IDs in the data, metadata, and tree data objects match
 
 #### create phyloseq object with completed metadata, otu table, and tree ####
-project_data <- merge_phyloseq(data, metadata, rawtreedata)
+project_data <- merge_phyloseq(biomdata, metadata, rawtreedata)
 #filtering steps, if not already done before loading into R
-#filter out samples with less than 1000 reads (arbitrary threshold, choose your own)
+#filter out samples with less than 1000 reads (arbitrary threshold and generally the minimum, choose your own, use sample_counts() to look at distribution of read counts per sample)
 project_data <- prune_samples(sample_sums(project_data) >= 1000, project_data) 
 # Remove OTUs with less than N total reads. (N = 250 in example) 
 project_data <- prune_taxa(taxa_sums(project_data) >= 250, project_data)
@@ -79,7 +79,7 @@ project_data <- project_data %>%
   subset_taxa(Rank5 != "__Mitochondria") %>% 
   subset_taxa(Rank3 != "__Chloroplast")
 
-# 18S (and optional for 16S): Remove unwanted clades
+# 18S (and optional for 16S): Remove unwanted clades 
 project_data <- project_data %>%
   subset_taxa(Rank5 != "UNWANTED_HOST_FAMILY") %>% 
   subset_taxa(Rank7 != "UNWANTED_CLADE")
@@ -90,6 +90,10 @@ project_data.unassigned <- project_data %>%
 # Remove unassigned taxa
 project_data <- project_data %>%
   subset_taxa(Rank1 != "Unassigned")
+# Remove counts that may represent noise, use a threshold (we are using a threshod of 2 reads for most datasets. be sure to choose the correct value for your own data.)
+otu <- as.data.frame(otu_table(project_data)) #get OTU table
+otu_table(project_data)[otu <= 2] <- 0 #for entries where the raw abundance of an OTU in a sample is less than N (N=2 in the example), set the raw read count to 0
+
 # OPTIONAL: modify Rank labels in taxa table (check the colnames of the tax_table(project_data) object to see if you want to change them)
 colnames(tax_table(project_data)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7")
 
