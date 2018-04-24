@@ -1,6 +1,6 @@
 #basic procedure for loading in a .biom file, processing data with phyloseq, doing diversity analyses
 #NOTE: THIS SCRIPT IS MEANT TO BE CHANGED TO FIT YOUR DATA. PLEASE REMEMBER TO:
-#       1. MAKE A COPY OF THIS SCRIPT INTO YOUR WORKING DIRECTORY
+#       1. MAKE A COPY OF THIS SCRIPT IF YOU WISH TO MODIFY IT
 #       2. CHANGE ALL GENERALIZED PARAMETERS/VARIABLES (EX: "FACTOR_1") TO MATCH YOUR DATA
 
 #### load libraries ####
