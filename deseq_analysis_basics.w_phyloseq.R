@@ -113,14 +113,14 @@ project_data.post_day4 <- prune_samples(sample_data(project_data)$experiment_day
 dds.var3 <- phyloseq_to_deseq2(project_data, design = ~ variable1 + variable2 + variable3)
 dds.var3 <- DESeq(dds.var3, test = "LRT", fitType = "parametric", reduced=~variable1 + variable2) 
 resultsNames(dds.var3) #check results names for the name of the contrast you'd like to examine
-res.var3 <- results(dds.var3, cooksCutoff = FALSE, alpha = alpha, pAdjustMethod = "BH", name="variable3_level2_vs_level1", altHypothesis = "greaterAbs") #do not use "contrast" with the LRT test, it may give you the wrong pvalues #whatever contrast is calcualted, it's done by default with the first category against the others, in alphabetical order, or in the order they appear in the factor levels
+res.var3 <- results(dds.var3, cooksCutoff = FALSE, alpha = alpha, pAdjustMethod = "BH", name="variable3_level2_vs_level1", altHypothesis = "greaterAbs") #here "level2" is experimental and "level1" is control or baseline #do not use "contrast" with the LRT test, it may give you the wrong pvalues #whatever contrast is calcualted, it's done by default with the first category against the others, in alphabetical order, or in the order they appear in the factor levels
 # view a summary of the results table with a padj value < 0.01
 summary(res.var3, alpha = alpha)
 
 ## OPTION 2: DESEQ RUN USING WALD TEST ##
 dds.var3 <- phyloseq_to_deseq2(project_data, design = ~ variable1 + variable2 + variable3)
 dds.var3 <- DESeq(dds.var3, test = "Wald", fitType = "parametric")
-res.var3 <- results(dds.var3, cooksCutoff = FALSE, alpha = alpha, pAdjustMethod = "BH", contrast=c("variable3", "level2", "level1"), altHypothesis = "greaterAbs") # here we can use "contrast" to select the comparison we are interested in
+res.var3 <- results(dds.var3, cooksCutoff = FALSE, alpha = alpha, pAdjustMethod = "BH", contrast=c("variable3", "level2", "level1"), altHypothesis = "greaterAbs") #here "level2" is experimental and "level1" is control or baseline #here we can use "contrast" to select the comparison we are interested in
 # view a summary of the results table with a padj value < 0.01
 summary(res.var3, alpha = alpha)
 
