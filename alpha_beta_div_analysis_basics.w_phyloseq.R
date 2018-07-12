@@ -147,6 +147,15 @@ project_data.chao1 = estimate_richness(project_data.rarefied, split = TRUE, meas
 sample_data(project_data.rarefied)$chao1 <- project_data.chao1$Chao1 #add to metadata (the rows are in the same order already)
 sample_data(project_data.rarefied)$chao1 <- as.numeric(sample_data(project_data.rarefied)$chao1)
 
+#### make basic plot with alpha diversity calculated separately ####
+#this plot lets you customize things a bit more than the plot_richness function, if desired
+p <- ggplot(sample_data(project_data.rarefied), aes(x=FACTOR_1, y=chao1, color=FACTOR_3))
+p + geom_boxplot() + 
+  facet_grid(~ FACTOR_2, drop=TRUE, scales="free", space="free") + #drop, scales, and space are used to ensure that each boxplot bar is equally sized, and that empty levels created by the facet grid are dropped from the final plot
+  labs(title="Alpha Diversity, Factor 1 ~ Factor 2 + Factor 3, Chao1", x="Factor1 ~ Factor2", y="Chao1") + 
+  scale_fill_manual(values=cbPalette) + scale_colour_manual(values=cbPalette) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
 #### beta diversity (NMDS, PCoA, etc.) ####
 #do ordinations
 set.seed(24)
