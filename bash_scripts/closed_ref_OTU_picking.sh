@@ -210,17 +210,17 @@ NODE-REPRESENTATIVES.DOWNSTREAM.no_chimeras_failures.txt
 NODE-REPRESENTATIVES.DOWNSTREAM.no_chimeras_otus.log
 NODE-REPRESENTATIVES.DOWNSTREAM.no_chimeras_otus.txt" >> closed_reference_otu_picking.log
 echo "" "">> closed_reference_otu_picking.log
-echo "assign_taxonomy_sim99 folder:" >> closed_reference_otu_picking.log
-echo "for_sim99_taxa_assignments_tax_assignments.log
-for_sim99_taxa_assignments_tax_assignments.txt
-sim_99.txt
-unassigned_99.txt" >> closed_reference_otu_picking.log
-echo "" >> closed_reference_otu_picking.log
 echo "assign_taxonomy_sim100 folder:" >> closed_reference_otu_picking.log
 echo "NODE-REPRESENTATIVES.DOWNSTREAM.failures_tax_assignments.log
 NODE-REPRESENTATIVES.DOWNSTREAM.failures_tax_assignments.txt
 sim_100.txt
 unassigned_100.txt" >> closed_reference_otu_picking.log
+echo "" >> closed_reference_otu_picking.log
+echo "assign_taxonomy_sim99 folder:" >> closed_reference_otu_picking.log
+echo "for_sim99_taxa_assignments_tax_assignments.log
+for_sim99_taxa_assignments_tax_assignments.txt
+sim_99.txt
+unassigned_99.txt" >> closed_reference_otu_picking.log
 echo "" >> closed_reference_otu_picking.log
 echo "assign_taxonomy_defaults folder" >> closed_reference_otu_picking.log
 echo "for_default_taxa_assignments_tax_assignments.log
