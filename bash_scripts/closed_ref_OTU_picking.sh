@@ -3,14 +3,14 @@
 # Input:
 # Will be specified below/while running
 
-# A script for processing a NODE_rep.fasta file into an text file composed of a filtered taxa map and successful taxonomy assignments (according to SILVA database and filtered fasta file w/ no unassigned OTUs)
-# First method: 
-# Last edited: August 2, 2018
+# A script for processing a NODE_rep.fasta file by Closed Reference OTU picking and taxonomy assignments
+
+# Last edited: August 7, 2018
 # authors: Tracy Wang, Evan Morien
 
 # Input:
-# paths to NODE_REPRESENTATIVES fasta file from MED, SILVA NR99 reference sequence set and taxonomy map, parameters file 
-# Parameters file should include (please remove parentheses when copying text over):
+# paths to NODE_REPRESENTATIVES fasta file from MED, SILVA reference sequence set and taxonomy map, parameters file 
+# Parameters file should include (please remove # when copying text over):
 #pick_otus:similarity    1.0
 #assign_taxonomy:similarity    1.0
 #assign_taxonomy:uclust_max_accepts    1
@@ -18,6 +18,7 @@
 # Output:
 # A filtered taxa map with the successful taxonomy assignments
 # Taxonomy assignments in separate folders. 
+# Please view detailed outputs in log file
 
 # Requirements: #links good as of July 2018
 # QIIME or macqiime is installed http://qiime.org/
@@ -27,7 +28,8 @@
 # This section prompts the user to specify necessary file paths and parameters
 # All files made during this script are specified in the LOG file, as well as all commands that were run.
 
-echo "This script will be creating an OTU table and requires the following:"
+echo "This script will be conducting closed reference OTU picking and taxonomy assignments using SILVA, default parameters and the filtered fasta file from closed reference OTU picking.
+      This script requires the following complete pathways:"
 echo "1. NODE REPRESENTATIVES from MED"
 echo "2. SILVA reference sequence set and taxonomy map"
 echo "3. Parameters file including: 
