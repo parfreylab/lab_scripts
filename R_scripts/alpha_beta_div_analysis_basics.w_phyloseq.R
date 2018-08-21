@@ -1,6 +1,6 @@
 #basic procedure for loading in a .biom file, processing data with phyloseq, doing diversity analyses
 #NOTE: THIS SCRIPT IS MEANT TO BE CHANGED TO FIT YOUR DATA. PLEASE REMEMBER TO:
-#       1. MAKE A COPY OF THIS SCRIPT INTO YOUR WORKING DIRECTORY
+#       1. MAKE A COPY OF THIS SCRIPT IF YOU WISH TO MODIFY IT
 #       2. CHANGE ALL GENERALIZED PARAMETERS/VARIABLES (EX: "FACTOR_1") TO MATCH YOUR DATA
 
 #### load libraries ####
@@ -72,7 +72,7 @@ metadata <- metadata[which(metadata$SOME_VARIABLE != "UNWANTED VALUE"), ] #works
 #### create phyloseq object with completed metadata, otu table, and tree ####
 project_data <- merge_phyloseq(biomdata, metadata, rawtreedata)
 #filtering steps, if not already done before loading into R
-#filter out samples with less than 1000 reads (arbitrary threshold and generally the minimum, choose your own)
+#filter out samples with less than 1000 reads (arbitrary threshold and generally the minimum, choose your own, use sample_counts() to look at distribution of read counts per sample)
 project_data <- prune_samples(sample_sums(project_data) >= 1000, project_data) 
 # Remove OTUs with less than N total reads. (N = 250 in example) 
 project_data <- prune_taxa(taxa_sums(project_data) >= 250, project_data)
@@ -92,10 +92,9 @@ project_data.unassigned <- project_data %>%
 # Remove unassigned taxa
 project_data <- project_data %>%
   subset_taxa(Rank1 != "Unassigned")
-# Remove counts that represent less than 0.01% of the total for each sample
-project_data.rel_abundance = transform_sample_counts(project_data, function(x) x/sum(x)) #transform to relative abundance
-otu <- as.data.frame(otu_table(project_data.rel_abundance)) #get OTU table
-otu_table(project_data)[otu < 0.0001] <- 0 #for entries where the relative abundance of an OTU in a sample is less than 0.01%, set the raw read count to 0
+# Remove counts that may represent noise, use a threshold (we are using a threshod of 2 reads for most datasets. be sure to choose the correct value for your own data.)
+otu <- as.data.frame(otu_table(project_data)) #get OTU table
+otu_table(project_data)[otu <= 2] <- 0 #for entries where the raw abundance of an OTU in a sample is less than N (N=2 in the example), set the raw read count to 0
 
 # OPTIONAL: modify Rank labels in taxa table (check the colnames of the tax_table(project_data) object to see if you want to change them)
 colnames(tax_table(project_data)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7")
@@ -147,6 +146,15 @@ dev.off()
 project_data.chao1 = estimate_richness(project_data.rarefied, split = TRUE, measures = c("Chao1")) #estimate richness
 sample_data(project_data.rarefied)$chao1 <- project_data.chao1$Chao1 #add to metadata (the rows are in the same order already)
 sample_data(project_data.rarefied)$chao1 <- as.numeric(sample_data(project_data.rarefied)$chao1)
+
+#### make basic plot with alpha diversity calculated separately ####
+#this plot lets you customize things a bit more than the plot_richness function, if desired
+p <- ggplot(sample_data(project_data.rarefied), aes(x=FACTOR_1, y=chao1, color=FACTOR_3))
+p + geom_boxplot() + 
+  facet_grid(~ FACTOR_2, drop=TRUE, scales="free", space="free") + #drop, scales, and space are used to ensure that each boxplot bar is equally sized, and that empty levels created by the facet grid are dropped from the final plot
+  labs(title="Alpha Diversity, Factor 1 ~ Factor 2 + Factor 3, Chao1", x="Factor1 ~ Factor2", y="Chao1") + 
+  scale_fill_manual(values=cbPalette) + scale_colour_manual(values=cbPalette) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 
 #### beta diversity (NMDS, PCoA, etc.) ####
 #do ordinations
