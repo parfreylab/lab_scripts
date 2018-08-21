@@ -2,6 +2,9 @@ import re
 import argparse
 import os.path
 
+__author__ = "Kevin Chan"
+__email__ = "kevchan1@alumni.ubc.ca"
+
 ####a script to create an analysis-ready mapping file and platemap with descriptive names from 96 well plate metadata files (metadata file, plate map, barcode plate spreadsheet -> mapping file w metadata & barcodes, plate map with descriptive names)####
 ##IMPORTANT: all inputs should be tab separated text files
 ##inputs:

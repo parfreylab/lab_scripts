@@ -15,6 +15,9 @@ test example: python get_metapath_runstats.py -p /Users/parfrey/Desktop/Kevin/we
 import argparse
 import os, os.path
 
+__author__ = "Kevin Chan"
+__email__ = "kevchan1@alumni.ubc.ca"
+
 print "run: python get_metapath_runstats.py -h for help.\n\nThis script concatenates all the run stats from a MetaPathways results folder into a single file titled 'total_runstats.txt' under mp_run_stats/."
 print "\n"
 

@@ -29,6 +29,9 @@ import re
 from sys import exit
 from collections import defaultdict
 
+__author__ = "Kevin Chan"
+__email__ = "kevchan1@alumni.ubc.ca"
+
 print "run: plate_map.add_metadata.py -h for help."
 print "\n"
 

@@ -23,6 +23,9 @@ import os
 import re
 import numpy as np
 
+__author__ = "Kevin Chan"
+__email__ = "kevchan1@alumni.ubc.ca"
+
 parser = argparse.ArgumentParser(
 	description = "This script removes extraneous information in the headers of FASTA files for MED input, and transposes + removes leading zeroes from MED output.")
 parser.add_argument(
