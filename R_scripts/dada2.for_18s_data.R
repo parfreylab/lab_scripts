@@ -1,16 +1,15 @@
 ####BEST PRACTICES FOR DADA2 READ PROCESSING WITH 18S DATA####
 #author: Evan Morien
 #using and modifying this dada2 guide as necessary: https://benjjneb.github.io/dada2/tutorial.html
-#last modified: Nov 28th, 2018
+#last modified: Dec 6th, 2018
 
 ####READ FIRST####
-#this document is intended as a rough guide for processing 18s metabarcoding data with dada2. it is not meant to present a definitive solution for this kind of work.
+#this document is intended as a rough guide for processing 18s metabarcoding data with dada2. it is not meant to present a definitive solution for this kind of work. you will need to adjust parameters according to the dataset you are working with.
 #eukaryotic species vary greatly in the length of different regions of the 18s gene, and doing any kind of trimming or truncation will exclude clades that have longer sequenced regions (for example, the V4 region is quite variable in length)
 #but it's also sometimes necessary to truncate your reads with dada2 to retain enough reads for analysis, so you will need to balance these two things against each other when using this pipeline.
 #best practices in our lab will involve the analysis of both merged and forward read sets separately, to identify clades excluded by any truncation/trimming done prior to merging.
-#to run this pipeline on forward reads only, just skip steps that involve the reverse reads, and skip the merging step, modifying code as necessary.
 
-#it's also necessary to filter out low-abundance ASVs after constructing the sequence table in dada2. dada2 developers do not provide any advice on this front, but the process is outlined below in the section after sequence table construction
+#it's necessary to filter out low-abundance ASVs after constructing the sequence table in dada2. dada2 developers do not provide any advice on this front, but the process is outlined below in the section after sequence table construction
 
 #our standard procedure with 18s reads processed with dada2 will be to do an analysis with both the merged reads and the R1s only, to make sure we aren't missing any important clades that have V4 regions too long to merge
 #the R1-only analysis procedure follows the merged read procedure in this guide
@@ -36,11 +35,11 @@ setwd("/projects/my_project/18s/")
 
 ####File Path Setup####
 #this is so dada2 can quickly iterate through all the R1 and R2 files in your read set
-path <- "/projects/my_project/18s/data/raw_data/" # CHANGE ME to the directory containing the fastq files after unzipping.
+path <- "/projects/my_project/18s/data/raw_data/" # CHANGE ME to the directory containing the fastq files
 list.files(path)
-fnFs <- sort(list.files(path, pattern="_R1_001.fastq", full.names = TRUE))
-fnRs <- sort(list.files(path, pattern="_R2_001.fastq", full.names = TRUE))
-sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
+fnFs <- sort(list.files(path, pattern="_R1_001.fastq.gz", full.names = TRUE)) #change the pattern to match all your R1 files
+fnRs <- sort(list.files(path, pattern="_R2_001.fastq.gz", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1) #change the delimiter in quotes and the number at the end of this command to decide how to split up the file name, and which element to extract for a unique sample name
 
 ####fastq Quality Plots####
 plotQualityProfile(fnFs[1:20]) #this plots the quality profiles for each sample, if you have a lot of samples, it's best to look at just a few of them, the plots take a minute or two to generate even only showing 10-20 samples.
@@ -48,18 +47,19 @@ plotQualityProfile(fnRs[1:20])
 
 ####prepare file names for filtering####
 #this defines names and paths for the filtered fastq files you are about to generate
-filtFs <- file.path(path, "dada2_filtered", paste0(sample.names, "_F_filt.fastq"))
-filtRs <- file.path(path, "dada2_filtered", paste0(sample.names, "_R_filt.fastq"))
+filtFs <- file.path(path, "dada2_filtered", paste0(sample.names, "_F_filt.fastq.gz"))
+filtRs <- file.path(path, "dada2_filtered", paste0(sample.names, "_R_filt.fastq.gz"))
 
 ####filter and trim reads####
 #adjusting the parameters for the filterAndTrim function are crucial to the success of a dada2 run. truncation length, in particular, will be a strong determinant of the percentage of reads you retain per sample
-#the parameters below represent best-practices from several different 18s experiments that we have done, tips from Ramon Masanna's lab, and parameters have observed in published literature. the truncation length will need to be adjusted for the sequencing technology, of course. this example truncation length is OK for MiSeq data.
-out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, maxN=0, maxEE=c(6,8), truncQ=c(2, 2), rm.phix=TRUE, compress=TRUE, verbose=TRUE, truncLen=c(240,220), multithread = TRUE, matchIDs=TRUE) #with trunQ filter
+#the parameters below represent best-practices from several different 18s experiments that we have done, tips from Ramon Masanna's lab, and parameters we have observed in published literature. the truncation length will need to be adjusted for the sequencing technology, of course. this example truncation length is OK for good quality MiSeq data.
+out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, maxN=0, maxEE=c(6,8), truncQ=c(2, 2), rm.phix=TRUE, compress=TRUE, verbose=TRUE, truncLen=c(240,220), multithread = TRUE, matchIDs=TRUE) #with low-quality data, the more aggressive you are with truncation, the more reads will be retained, but you still need to merge, so consider how much read overlap remains after truncation
 retained_18s <- as.data.frame(out)
 retained_18s$percentage_retained <- retained_18s$reads.out/retained_18s$reads.in*100
 View(retained_18s)
 
 ####learn error rates####
+#the next three sections (learn error rates, dereplication, sample inference) are the core of dada2's sequence processing pipeline. read the dada2 paper and their online documentation (linked at top of this guide) for more information on how these steps work
 errF <- learnErrors(filtFs, multithread=TRUE)
 errR <- learnErrors(filtRs, multithread=TRUE)
 
@@ -193,13 +193,10 @@ ps.dada2_join <- phyloseq(otu_table(seqtab.nosingletons.nochim, taxa_are_rows=FA
                           sample_data(rawmetadata), 
                           tax_table(taxa))
 
-#set column names for taxonomy table
-colnames(tax_table(ps.dada2_join)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7", "Accession")
-
-# Remove samples with less than N reads (N=100 in example. adjust per experiment.)
+# Remove samples with less than N reads (N=100 in example. adjust per experiment)
 ps.dada2_join <- prune_samples(sample_sums(ps.dada2_join) >= 100, ps.dada2_join)
 
-# Remove OTUs with less than N total reads. (N = 250 for example) 
+#OPTIONAL: Remove OTUs with less than N total reads. (N = 50 for example. adjust per experiment) 
 ps.dada2_join <- prune_taxa(taxa_sums(ps.dada2_join) >= 50, ps.dada2_join)
 
 # Set aside unassigned taxa #with dada2, there may not be any unassigned taxa as dada2's RDP classifier usually ends up classifying everything. You may want to adjust this command to set aside ASVs that have no assignment beyond Rank1 instead of no assignment at Rank1.
@@ -215,7 +212,7 @@ otu_table(ps.dada2_join)[otu <= 1] <- 0
 
 #after denoising you can also remove ASVs that are in groups you wish to exclude (i.e. mammalia, embryophyta, etc.)
 #to do this, just determine which rank the clade is captured by, and filter like so:
-# Remove mitochondrial and chloroplast OTUs
+# Remove mammalian and plant OTUs #this is just an example for a human gut study where we're not interested in anything but what's living in the gut
 ps.dada2_join <- ps.dada2_join %>%
   subset_taxa(Rank5 != "Mammalia") %>% #you can chain as many of these subset_taxa calls as you like into this single command using the R pipe (%>%)
   subset_taxa(Rank5 != "Embryophyta")
@@ -227,27 +224,28 @@ ps.dada2_join <- ps.dada2_join %>%
 ####R1-ONLY ANALYSIS GUIDE####
 ####File Path Setup####
 #this is so dada2 can quickly iterate through all the R1 and R2 files in your read set
-path <- "/projects/my_project/18s/data/raw_data/" # CHANGE ME to the directory containing the fastq files after unzipping.
+path <- "/projects/my_project/18s/data/raw_data/" # CHANGE ME to the directory containing the fastq files
 list.files(path)
-fnFs <- sort(list.files(path, pattern="_R1_001.fastq", full.names = TRUE))
-sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
+fnFs <- sort(list.files(path, pattern="_R1_001.fastq.gz", full.names = TRUE))#change the pattern to match all your R1 files
+sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1) #change the delimiter in quotes and the number at the end of this command to decide how to split up the file name, and which element to extract for a unique sample name
 
 ####fastq Quality Plots####
 plotQualityProfile(fnFs[1:20]) #this plots the quality profiles for each sample, if you have a lot of samples, it's best to look at just a few of them, the plots take a minute or two to generate even only showing 10-20 samples.
 
 ####prepare file names for filtering####
 #this defines names and paths for the filtered fastq files you are about to generate
-filtFs <- file.path(path, "dada2_filtered", paste0(sample.names, "_F_filt.fastq"))
+filtFs <- file.path(path, "dada2_filtered", paste0(sample.names, "_F_filt.fastq.gz"))
 
 ####filter and trim reads####
 #adjusting the parameters for the filterAndTrim function are crucial to the success of a dada2 run. truncation length, in particular, will be a strong determinant of the percentage of reads you retain per sample
-#the parameters below represent best-practices from several different 18s experiments that we have done, tips from Ramon Masanna's lab, and parameters have observed in published literature. the truncation length will need to be adjusted for the sequencing technology, of course. this example truncation length is OK for MiSeq data.
+#the parameters below represent best-practices from several different 18s experiments that we have done, tips from Ramon Masanna's lab, and parameters we have observed in published literature. the truncation length will need to be adjusted for the sequencing technology, of course. this example truncation length is OK for good quality MiSeq data.
 out <- filterAndTrim(fnFs, filtFs, maxN=0, maxEE=c(6), truncQ=c(2), rm.phix=TRUE, compress=TRUE, verbose=TRUE, truncLen=c(240), multithread = TRUE, matchIDs=TRUE) #with trunQ filter
 retained_R1s <- as.data.frame(out)
 retained_R1s$percentage_retained <- retained_R1s$reads.out/retained_R1s$reads.in*100
 View(retained_R1s)
 
 ####learn error rates####
+#the next three sections (learn error rates, dereplication, sample inference) are the core of dada2's sequence processing pipeline. read the dada2 paper and their online documentation (linked at top of this guide) for more information on how these steps work
 errF <- learnErrors(filtFs, multithread=TRUE)
 plotErrors(errF, nominalQ=TRUE) #assess this graph. it shows the error rates observed in your dataset. strange or unexpected shapes in the plot should be considered before moving on.
 
@@ -310,6 +308,9 @@ track <- cbind(out[samples_to_keep,], sapply(dadaFs[samples_to_keep], getN), sap
 track <- cbind(track, 100-track[,4]/track[,3]*100, 100-track[,5]/track[,4]*100)
 colnames(track) <- c("input", "filtered", "denoisedF", "nosingletons", "nochimeras", "percent_singletons", "percent_chimeras")
 rownames(track) <- sample.names
+
+####save output from sequnce table construction steps####
+write.table(seqtab.nosingletons.nochim, "sequence_table.18s_R1s.txt", sep="\t", quote=F, row.names=T, col.names=T)
 write.table(track, "read_retention.merged_18s_R1s.txt", quote=F, row.names=T, col.names=T, sep="\t")
 
 ####assign taxonomy####
@@ -329,9 +330,7 @@ colnames(taxa) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7
 colnames(taxa) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7", "Accession") #for parfreylab version of SIVLA 132
 colnames(taxa) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7") #for dada2 dev's version of SIVLA 132
 
-####saving data####
-#please note you can also save these as plain text files. Those commands will replace these when I have time to make sure I have generalizable code for it.
+####saving taxonomy data####
 write.table(taxa, "taxonomy_table.18s_R1s.txt", sep="\t", quote=F, row.names=T, col.names=T)
-write.table(seqtab.nosingletons.nochim, "sequence_table.18s_R1s.txt", sep="\t", quote=F, row.names=T, col.names=T)
 
 #the handoff to phyloseq remains the same for both R1 and merged procedures, see above section.
