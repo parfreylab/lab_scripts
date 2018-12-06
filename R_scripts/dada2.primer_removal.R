@@ -1,7 +1,7 @@
 ####PRIMER REMOVAL IN 16S AND 18S SEQUECNES, DADA2 PIPELINE####
 #author: Evan Morien
 #using this ITS guide for primer removal: https://benjjneb.github.io/dada2/ITS_workflow.html
-#last modified: Nov 28th, 2018
+#last modified: Dec 6th, 2018
 
 ####Dependencies and Requirements####
 #you must first install cutadapt ( in your system, not in R! ) to do primer removal
@@ -23,10 +23,10 @@ setwd("/projects/my_project/")
 
 ####File Path Setup####
 #this is so dada2 can quickly iterate through all the R1 and R2 files in your read set
-path <- "/projects/my_project/data/raw_data/" # CHANGE ME to the directory containing the fastq files after unzipping.
+path <- "/projects/my_project/data/raw_data/" # CHANGE ME to the directory containing the fastq files
 list.files(path)
-fnFs <- sort(list.files(path, pattern="_R1_001.fastq", full.names = TRUE))
-fnRs <- sort(list.files(path, pattern="_R2_001.fastq", full.names = TRUE))
+fnFs <- sort(list.files(path, pattern="_R1_001.fastq.gz", full.names = TRUE))
+fnRs <- sort(list.files(path, pattern="_R2_001.fastq.gz", full.names = TRUE))
 sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
 
 ####fastq Quality Plots####
