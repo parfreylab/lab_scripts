@@ -149,7 +149,10 @@ track <- cbind(out[samples_to_keep,], sapply(dadaFs[samples_to_keep], getN), sap
 track <- cbind(track, 100-track[,6]/track[,5]*100, 100-track[,7]/track[,6]*100)
 colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nosingletons", "nochimeras", "percent_singletons", "percent_chimeras")
 rownames(track) <- sample.names[samples_to_keep]
+
+####save output from sequnce table construction steps####
 write.table(track, "read_retention.merged_18s.txt", quote=F, row.names=T, col.names=T, sep="\t")
+write.table(seqtab.nosingletons.nochim, "sequence_table.afribiota_18s_MI.txt", sep="\t", quote=F, row.names=T, col.names=T)
 
 ####assign taxonomy####
 #note, this takes ages if you have a large dataset. strongly recommend doing on a multi-core machine (zoology cluster, or entamoeba in the lab). another option: saving the sequences as a fasta file (with writeFasta) and using QIIME's taxonomy assignment command will save you time, and is only slightly less accurate than the dada2 package's taxonomy assignment function (their implementation of RDP).
@@ -168,10 +171,8 @@ colnames(taxa) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7
 colnames(taxa) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7", "Accession") #for parfreylab version of SIVLA 132
 colnames(taxa) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7") #for dada2 dev's version of SIVLA 132
 
-####saving data####
-#please note you can also save these as plain text files. Those commands will replace these when I have time to make sure I have generalizable code for it.
+####saving taxonomy data####
 write.table(taxa, "taxonomy_table.18s.txt", sep="\t", quote=F, row.names=T, col.names=T)
-write.table(seqtab.nosingletons.nochim, "sequence_table.18s.txt", sep="\t", quote=F, row.names=T, col.names=T)
 
 #### hand off to PhyloSeq ####
 #load sample data
