@@ -148,7 +148,7 @@ track <- cbind(out[samples_to_keep,], sapply(dadaFs[samples_to_keep], getN), sap
 # If processing only a single sample, remove the sapply calls: e.g. replace sapply(dadaFs, getN) with getN(dadaFs)
 track <- cbind(track, 100-track[,6]/track[,5]*100, 100-track[,7]/track[,6]*100)
 colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nosingletons", "nochimeras", "percent_singletons", "percent_chimeras")
-rownames(track) <- sample.names
+rownames(track) <- sample.names[samples_to_keep]
 write.table(track, "read_retention.merged_18s.txt", quote=F, row.names=T, col.names=T, sep="\t")
 
 ####assign taxonomy####
