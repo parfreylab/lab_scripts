@@ -13,6 +13,9 @@
 ####Dependencies and Requirements####
 #the pipeline requires that you begin with demultiplexed fastq files (one fastq per sample)
 
+####IMPORTANT EXPERIMENT-SPECIFIC INFO####
+#datasets PCRd at Dalhousie need to be primer trimmed. Please use the primer trimming guide for dada2 in our lab github R scripts folder if you need help primer-trimming your fastq files.
+
 ####Libraries####
 library(dada2)
 library(phyloseq)
