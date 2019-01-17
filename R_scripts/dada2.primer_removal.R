@@ -113,7 +113,7 @@ filtRs <- file.path(path.cut, "filtered", basename(cutRs))
 
 #adjusting the parameters for the filterAndTrim function are crucial to the success of a dada2 run. truncation length, in particular, will be a strong determinant of the percentage of reads you retain per sample
 #the parameters below represent best-practices from several different 18s experiments that we have done, tips from Ramon Masanna's lab, and parameters we have observed in the literature. the truncation length will need to be adjusted for the sequencing technology, of course. this example truncation length is OK for MiSeq data of expected (read: average) quality.
-out <- filterAndTrim(cutFs, cutRs, filtFs, filtRs, maxN=0, maxEE=c(6,8), truncQ=c(2, 2), rm.phix=TRUE, compress=TRUE, verbose=TRUE, truncLen=c(240,220), multithread = TRUE, matchIDs=TRUE) #with trunQ filter
+out <- filterAndTrim(cutFs, filtFs, cutRs, filtRs, maxN=0, maxEE=c(6,8), truncQ=c(2, 2), rm.phix=TRUE, compress=TRUE, verbose=TRUE, truncLen=c(240,220), multithread = TRUE, matchIDs=TRUE) #with trunQ filter
 retained <- as.data.frame(out)
 retained$percentage_retained <- retained$reads.out/retained$reads.in*100
 View(retained)
