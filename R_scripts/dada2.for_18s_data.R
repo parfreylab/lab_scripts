@@ -306,7 +306,7 @@ sum(seqtab.nosingletons.nochim)/sum(seqtab.nosingletons) #proportion of nonchime
 
 ####track read retention through steps####
 getN <- function(x) sum(getUniques(x))
-track <- cbind(out[samples_to_keep,], sapply(dadaFs[samples_to_keep], getN), sapply(dadaRs[samples_to_keep], getN), sapply(mergers, getN), rowSums(seqtab.nosingletons), rowSums(seqtab.nosingletons.nochim))
+track <- cbind(out[samples_to_keep,], sapply(dadaFs[samples_to_keep], getN), sapply(dadaRs[samples_to_keep], getN), rowSums(seqtab.nosingletons), rowSums(seqtab.nosingletons.nochim))
 # If processing only a single sample, remove the sapply calls: e.g. replace sapply(dadaFs, getN) with getN(dadaFs)
 track <- cbind(track, 100-track[,4]/track[,3]*100, 100-track[,5]/track[,4]*100)
 colnames(track) <- c("input", "filtered", "denoisedF", "nosingletons", "nochimeras", "percent_singletons", "percent_chimeras")
