@@ -125,7 +125,7 @@ myPalette <- c("#00FFFF", "#56B4E9", "#000000", "#009E73", "#F0E442", "#E69F00",
 #### Make Plots ####
 #example plot showing relative abundance of taxa through timepoints (coded as "experiment_day"), with individuals grouped together (coded as "rat_name"), and animals in the same cage grouped together as well (coded as "cage")
 ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) + 
-  facet_wrap(cage~rat_name, ncol=4, strip.position = "top") + #facet_wrap is the function for determining how plots are grouped within a multi-plot space
+  facet_wrap(cage~rat_name, ncol=4, strip.position = "top", drop=TRUE, scales="free") + #facet_wrap is the function for determining how plots are grouped within a multi-plot space
   theme_bw() +
   theme(strip.background = element_rect(fill="white")) + #these "theme" settings determine how the facet grid looks on the plot
   theme(strip.text = element_text(colour = 'black')) +
@@ -140,7 +140,7 @@ ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) +
 
 #similar example plot where the number of columns in the multi-plot is specified directly
 ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) + 
-  facet_wrap(~ rat_name, ncol=10) + #here we only group the data by one factor, instead of two like the example above
+  facet_wrap(~ rat_name, ncol=10, drop=TRUE, scales="free") + #here we only group the data by one factor, instead of two like the example above
   theme_bw() +
   theme(strip.background = element_rect(fill="white")) +
   theme(strip.text = element_text(colour = 'black')) +
@@ -154,7 +154,7 @@ ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) +
 
 #in this example the data is grouped in such a way that the relative abundances for each sample adds to the total height of the bar they are grouped into
 ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) + 
-  facet_wrap(~ infected) +
+  facet_wrap(~ infected, drop=TRUE, scales="free") +
   theme_bw() +
   theme(strip.background = element_rect(fill="white")) +
   theme(strip.text = element_text(colour = 'black')) +
@@ -168,7 +168,7 @@ ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) +
 
 #in this example the x axis labels are coloured by an additional colour palette #be careful with this setting, it may not apply the colors correctly. I have had better luck with a string of colors which I define manually, in the order I want them used in the plot.
 ggplot(family_plot, aes(x = rat_name, y = Abundance, fill = Rank5)) + 
-  facet_grid(experiment_day~.) +
+  facet_grid(experiment_day~., scales = "free", space = "free") + #here scales and space will do the same thing as drop and scales in the facet_wrap function. empty levels (x plotting points/values that aren't present in the facet being plotted will be dropped from the plot)
   theme_bw() +
   theme(strip.background = element_rect(fill="white"), axis.text.x = element_text(colour=myPalette)) +
   theme(strip.text = element_text(colour = 'black')) +
