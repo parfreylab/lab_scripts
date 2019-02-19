@@ -31,6 +31,7 @@ library(reshape2)
 library(stringr)
 library(data.table)
 library(broom)
+library(seqinr)
 
 ####Environment Setup####
 theme_set(theme_bw())
