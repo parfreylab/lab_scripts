@@ -197,6 +197,9 @@ ps.dada2_join <- phyloseq(otu_table(seqtab.nosingletons.nochim, taxa_are_rows=FA
                           sample_data(rawmetadata), 
                           tax_table(taxa))
 
+# at this point you i recommend saving your complete experiment as a phyloseq object, for ease of picking up here if you wish to make changes to your filtering criteria later on
+saveRDS(ps.dada2_join, "my_project.full_dataset.phyloseq_format.RDS")
+
 # Remove samples with less than N reads (N=100 in example. adjust per experiment)
 ps.dada2_join <- prune_samples(sample_sums(ps.dada2_join) >= 100, ps.dada2_join)
 
@@ -221,9 +224,14 @@ ps.dada2_join <- ps.dada2_join %>%
   subset_taxa(Rank5 != "Mammalia") %>% #you can chain as many of these subset_taxa calls as you like into this single command using the R pipe (%>%)
   subset_taxa(Rank5 != "Embryophyta")
 
+# now replace the long ASV names (the actual sequences) with human-readable names, and save the new names and sequences as a .fasta file in your project working directory
+my_otu_table <- t(as.data.frame(unclass(otu_table(ps.dada2_join)))) #transposed (OTUs are rows) data frame. unclassing the otu_table() output avoids type/class errors later on
+ASV.seq <- as.character(unclass(row.names(my_otu_table))) #store sequences in character vector
+ASV.num <- paste0("ASV", seq(ntaxa(ps.dada2_join)), sep='') #create new names
+write.fasta(sequences=as.list(ASV.seq), names=ASV.num, "my_project.ASV_sequences.fasta") #save sequences with new names in fasta format
+taxa_names(ps.dada2_join) <- ASV.num #rename your sequences in the phyloseq object
+
 #with your filtered phyloseq object, you are now ready to move on to whatever statistical/diversity analyses you're planning to do. please see other R script guides in the lab github.
-
-
 
 ####R1-ONLY ANALYSIS GUIDE####
 ####File Path Setup####
