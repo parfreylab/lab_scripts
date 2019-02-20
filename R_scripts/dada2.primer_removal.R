@@ -51,7 +51,7 @@ allOrients <- function(primer) {
 }
 FWD.orients <- allOrients(FWD)
 REV.orients <- allOrients(REV)
-FWD.orients
+FWD.orients #IMPORTANT NOTE: if you have trouble with the complement() function here, and it doesn't produce a sequence, unload the ape library and re-try
 
 fnFs.filtN <- file.path(path, "filtN", basename(fnFs)) # Put N-filterd files in filtN/ subdirectory
 fnRs.filtN <- file.path(path, "filtN", basename(fnRs))
