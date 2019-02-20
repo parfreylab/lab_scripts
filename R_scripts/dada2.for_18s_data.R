@@ -157,7 +157,14 @@ rownames(track) <- sample.names[samples_to_keep]
 
 ####save output from sequnce table construction steps####
 write.table(track, "read_retention.merged_18s.txt", quote=F, row.names=T, col.names=T, sep="\t")
-write.table(seqtab.nosingletons.nochim, "sequence_table.afribiota_18s_MI.txt", sep="\t", quote=F, row.names=T, col.names=T)
+write.table(seqtab.nosingletons.nochim, "sequence_table.my_project_18s.txt", sep="\t", quote=F, row.names=T, col.names=T)
+
+#if you must save your sequence table and load it back in before doing taxonomy assignments, here is how to reformat the object so that dada2 will accept it again
+seqtab.nosingletons.nochim <- fread("sequence_table.my_project_18s.txt", sep="\t", header=TRUE) #use fread to speed up read-in process
+seqtab.nosingletons.nochim <- as.matrix(seqtab.nosingletons.nochim) #cast as matrix
+row.names(seqtab.nosingletons.nochim) <- seqtab.nosingletons.nochim[,1] #set row names
+seqtab.nosingletons.nochim <- seqtab.nosingletons.nochim[,-1] #remove sampleID column
+class(seqtab.nosingletons.nochim) <- "numeric" #make class of matrix columns numeric
 
 ####assign taxonomy####
 #note, this takes ages if you have a large dataset. strongly recommend doing on a multi-core machine (zoology cluster, or entamoeba in the lab). another option: saving the sequences as a fasta file (with writeFasta) and using QIIME's taxonomy assignment command will save you time, and is only slightly less accurate than the dada2 package's taxonomy assignment function (their implementation of RDP).
