@@ -158,6 +158,14 @@ rownames(track) <- sample.names[samples_to_keep]
 write.table(track, "read_retention.16s.txt", quote=F, row.names=T, col.names=T, sep="\t")
 write.table(seqtab.nosingletons.nochim, "sequence_table.16s.txt", sep="\t", quote=F, row.names=T, col.names=T)
 
+#if you must save your sequence table and load it back in before doing taxonomy assignments, here is how to reformat the object so that dada2 will accept it again
+#please note that this file will have been modified slightly after saving, with the string "SampleID" added for the first column's header (R defaults to excluding the first column header when writing files)
+seqtab.nosingletons.nochim <- fread("sequence_table.16s.txt", sep="\t", header=TRUE) #use fread to speed up read-in process
+seqtab.nosingletons.nochim <- as.matrix(seqtab.nosingletons.nochim) #cast as matrix
+row.names(seqtab.nosingletons.nochim) <- seqtab.nosingletons.nochim[,1] #set row names
+seqtab.nosingletons.nochim <- seqtab.nosingletons.nochim[,-1] #remove SampleID column
+class(seqtab.nosingletons.nochim) <- "numeric" #make class of matrix columns numeric
+
 ####assign taxonomy####
 #note, this takes ages if you have a large dataset. saving the sequences as a fasta file (with writeFasta) and using QIIME's taxonomy assignment command will save you time, and is only slightly less accurate than the dada2 package's taxonomy assignment function.
 taxa <- assignTaxonomy(seqtab.nosingletons.nochim, "~/Desktop/lab_member_files/taxonomy_databases/silva_for_dada2/v132_for_parfreylab/16s/silva_132.16s.99_rep_set.dada2.fa.gz", multithread=TRUE)
