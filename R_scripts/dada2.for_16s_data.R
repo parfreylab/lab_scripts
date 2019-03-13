@@ -41,24 +41,89 @@ setwd("/projects/my_project/16s/")
 path <- "/projects/my_project/16s/data/raw_data/" # CHANGE ME to the directory containing the fastq files
 list.files(path)
 fnFs <- sort(list.files(path, pattern="_R1_001.fastq.gz", full.names = TRUE)) #change the pattern to match all your R1 files
-fnRs <- sort(list.files(path, pattern="_R2_001.fastq.gz", full.names = TRUE))
+fnRs <- sort(list.files(path, pattern="_R2_001.fastq.gz", full.names = TRUE)) #same for this pattern, for R2 files
 sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1) #change the delimiter in quotes and the number at the end of this command to decide how to split up the file name, and which element to extract for a unique sample name
 
 ####fastq Quality Plots####
 plotQualityProfile(fnFs[1:20]) #this plots the quality profiles for each sample, if you have a lot of samples, it's best to look at just a few of them, the plots take a minute or two to generate even only showing 10-20 samples.
 plotQualityProfile(fnRs[1:20])
 
-####prepare file names for filtering####
-#this defines names and paths for the filtered fastq files you are about to generate
-filtFs <- file.path(path, "dada2_filtered", paste0(sample.names, "_F_filt.fastq.gz"))
-filtRs <- file.path(path, "dada2_filtered", paste0(sample.names, "_R_filt.fastq.gz"))
+####Primer Removal####
+####identify primers####
+FWD <- "GTGYCAGCMGCCGCGGTAA"  ## CHANGE ME to your forward primer sequence
+REV <- "CCGYCAATTYMTTTRAGTTT"  ## CHANGE ME to your reverse primer sequence
+allOrients <- function(primer) {
+  # Create all orientations of the input sequence
+  require(Biostrings)
+  dna <- DNAString(primer)  # The Biostrings works w/ DNAString objects rather than character vectors
+  orients <- c(Forward = dna, Complement = complement(dna), Reverse = reverse(dna), 
+               RevComp = reverseComplement(dna))
+  return(sapply(orients, toString))  # Convert back to character vector
+}
+FWD.orients <- allOrients(FWD)
+REV.orients <- allOrients(REV)
+FWD.orients
 
+fnFs.filtN <- file.path(path, "filtN", basename(fnFs)) # Put N-filterd files in filtN/ subdirectory
+fnRs.filtN <- file.path(path, "filtN", basename(fnRs))
+filterAndTrim(fnFs, fnFs.filtN, fnRs, fnRs.filtN, maxN = 0, multithread = TRUE, compress = TRUE)
 
+primerHits <- function(primer, fn) {
+  # Counts number of reads in which the primer is found
+  nhits <- vcountPattern(primer, sread(readFastq(fn)), fixed = FALSE)
+  return(sum(nhits > 0))
+}
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[60]]), 
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnRs.filtN[[60]]), 
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.filtN[[60]]), 
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnRs.filtN[[60]]))
+
+####OPTIONAL!!!!####
+REV <- REV.orients[["RevComp"]] #IMPORTANT!!! change orientation ONLY IF NECESSARY. see the dada2 ITS_workflow guide section "Identify Primers" for details. it is linked at the top of this guide.
+
+#### primer removal ####
+cutadapt <- "/usr/local/bin/cutadapt" # CHANGE ME to the cutadapt path on your machine
+system2(cutadapt, args = "--version")
+
+path.cut <- file.path(path, "cutadapt")
+if(!dir.exists(path.cut)) dir.create(path.cut)
+fnFs.cut <- file.path(path.cut, basename(fnFs))
+fnRs.cut <- file.path(path.cut, basename(fnRs))
+
+FWD.RC <- dada2:::rc(FWD)
+REV.RC <- dada2:::rc(REV)
+# Trim FWD and the reverse-complement of REV off of R1 (forward reads)
+R1.flags <- paste("-g", FWD, "-a", REV.RC) 
+# Trim REV and the reverse-complement of FWD off of R2 (reverse reads)
+R2.flags <- paste("-G", REV, "-A", FWD.RC) 
+
+#Run Cutadapt
+for(i in seq_along(fnFs)) {
+  system2(cutadapt, args = c(R1.flags, R2.flags, "-n", 2, # -n 2 required to remove FWD and REV from reads
+                             "-o", fnFs.cut[i], "-p", fnRs.cut[i], # output files
+                             fnFs.filtN[i], fnRs.filtN[i])) # input files
+}
+
+#sanity check, should report zero for all orientations and read sets
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.cut[[1]]), 
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnRs.cut[[1]]), 
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.cut[[1]]), 
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnRs.cut[[1]]))
+
+# Forward and reverse fastq filenames have the format:
+cutFs <- sort(list.files(path.cut, pattern = "R1", full.names = TRUE))
+cutRs <- sort(list.files(path.cut, pattern = "R2", full.names = TRUE))
 
 ####filter and trim reads####
-#adjusting the parameters for the filterAndTrim function are crucial to the success of a dada2 run. truncation length, in particular, will be a strong determinant of the percentage of reads you retain per sample
-#the parameters below represent best-practices from several different experiments that we have done, tips from Ramon Masanna's lab, and parameters we have observed in published literature. the truncation length will need to be adjusted for the sequencing technology, of course. this example truncation length is OK for good quality MiSeq data.
-out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=c(240,220), maxN=0, maxEE=c(6,8), truncQ=c(2,2), rm.phix=TRUE, verbose=TRUE, matchIDs=TRUE, compress=TRUE, multithread=TRUE) #with low-quality data, the more aggressive you are with truncation, the more reads will be retained, but you still need to merge, so consider how much read overlap remains after truncation
+filtFs <- file.path(path.cut, "filtered", basename(cutFs))
+filtRs <- file.path(path.cut, "filtered", basename(cutRs))
+
+####trim & filter####
+#filter and trim command. dada2 can canonically handle lots of errors, I am typically permissive in the maxEE parameter set here, in order to retain the maximum number of reads possible. error correction steps built into the dada2 pipeline have no trouble handling data with this many expected errors.
+#it is best, after primer removal, to not truncate with 16s data. you will exclude organisms that have a shorter insert than the truncation length (definitely possible, but more of a concern with 18s than 16s). defining a minimum sequence length is best. 150 should be well below the lower bound for this region.
+out <- filterAndTrim(cutFs, filtFs, cutRs, filtRs, truncLen=c(0,0), minLen = c(150,120),
+                     maxN=c(0,0), maxEE=c(8,10), truncQ=c(2,2), rm.phix=TRUE, matchIDs=TRUE,
+                     compress=TRUE, multithread=TRUE)
 retained <- as.data.frame(out)
 retained$percentage_retained <- retained$reads.out/retained$reads.in*100
 View(retained)
@@ -161,10 +226,11 @@ write.table(seqtab.nosingletons.nochim, "sequence_table.16s.txt", sep="\t", quot
 #if you must save your sequence table and load it back in before doing taxonomy assignments, here is how to reformat the object so that dada2 will accept it again
 #please note that this file will have been modified slightly after saving, with the string "SampleID" added for the first column's header (R defaults to excluding the first column header when writing files)
 seqtab.nosingletons.nochim <- fread("sequence_table.16s.txt", sep="\t", header=TRUE) #use fread to speed up read-in process
+seqtab_row_names <- seqtab.nosingletons.nochim[,1] #store row names
 seqtab.nosingletons.nochim <- as.matrix(seqtab.nosingletons.nochim) #cast as matrix
-row.names(seqtab.nosingletons.nochim) <- seqtab.nosingletons.nochim[,1] #set row names
-seqtab.nosingletons.nochim <- seqtab.nosingletons.nochim[,-1] #remove SampleID column
+seqtab.nosingletons.nochim <- seqtab.nosingletons.nochim[,-1] #remove sampleID column
 class(seqtab.nosingletons.nochim) <- "numeric" #make class of matrix columns numeric
+row.names(seqtab.nosingletons.nochim) <- seqtab_row.names #set row names
 
 ####assign taxonomy####
 #note, this takes ages if you have a large dataset. saving the sequences as a fasta file (with writeFasta) and using QIIME's taxonomy assignment command will save you time, and is only slightly less accurate than the dada2 package's taxonomy assignment function.
