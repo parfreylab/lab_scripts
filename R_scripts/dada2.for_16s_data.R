@@ -1,7 +1,7 @@
 ####DADA2 BEST PRACTICES FOR PROCESSING 16S SEQUENCES####
 #author: Evan Morien
 #using and modifying this dada2 guide as necessary: https://benjjneb.github.io/dada2/tutorial.html
-#last modified: Dec 6th, 2018
+#last modified: March 18th, 2019
 
 ####READ FIRST####
 #this document is intended as a rough guide for processing 16s metabarcoding data with dada2. it is not meant to present a definitive solution for this kind of work. you will need to adjust parameters according to the dataset you are working with.
@@ -19,9 +19,6 @@
 ####Libraries####
 library(dada2)
 library(phyloseq)
-library(ShortRead)
-library(Biostrings)
-library(vegan)
 library(tidyverse)
 library(reshape2)
 library(stringr)
@@ -30,7 +27,10 @@ library(broom)
 library(ape)
 library(qualpalr)
 library(viridis)
+library(ShortRead)
+library(Biostrings)
 library(seqinr)
+
 
 ####Environment Setup####
 theme_set(theme_bw())
@@ -73,10 +73,10 @@ primerHits <- function(primer, fn) {
   nhits <- vcountPattern(primer, sread(readFastq(fn)), fixed = FALSE)
   return(sum(nhits > 0))
 }
-rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[60]]), 
-      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnRs.filtN[[60]]), 
-      REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.filtN[[60]]), 
-      REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnRs.filtN[[60]]))
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[5]]), #add the index of the sample you'd like to use for this test (your first sample may be a blank/control and not have many sequences in it, be mindful of this)
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnRs.filtN[[5]]), 
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.filtN[[5]]), 
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnRs.filtN[[5]]))
 
 ####OPTIONAL!!!!####
 REV <- REV.orients[["RevComp"]] #IMPORTANT!!! change orientation ONLY IF NECESSARY. see the dada2 ITS_workflow guide section "Identify Primers" for details. it is linked at the top of this guide.
@@ -120,7 +120,7 @@ filtRs <- file.path(path.cut, "filtered", basename(cutRs))
 
 ####trim & filter####
 #filter and trim command. dada2 can canonically handle lots of errors, I am typically permissive in the maxEE parameter set here, in order to retain the maximum number of reads possible. error correction steps built into the dada2 pipeline have no trouble handling data with this many expected errors.
-#it is best, after primer removal, to not truncate with 16s data. you will exclude organisms that have a shorter insert than the truncation length (definitely possible, but more of a concern with 18s than 16s). defining a minimum sequence length is best. 150 should be well below the lower bound for this region.
+#it is best, after primer removal, to not truncate with 18s data, or with data from any region in which the length is broadly variable. you may exclude organisms that have a shorter insert than the truncation length (definitely possible, good example is giardia). defining a minimum sequence length is best.
 out <- filterAndTrim(cutFs, filtFs, cutRs, filtRs, truncLen=c(0,0), minLen = c(150,120),
                      maxN=c(0,0), maxEE=c(8,10), truncQ=c(2,2), rm.phix=TRUE, matchIDs=TRUE,
                      compress=TRUE, multithread=TRUE)
@@ -220,17 +220,14 @@ colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "n
 rownames(track) <- sample.names[samples_to_keep]
 
 ####save output from sequnce table construction steps####
-write.table(track, "read_retention.16s.txt", quote=F, row.names=T, col.names=T, sep="\t")
-write.table(seqtab.nosingletons.nochim, "sequence_table.16s.txt", sep="\t", quote=F, row.names=T, col.names=T)
+write.table(data.frame("row_names"=rownames(track),track),"read_retention.16s.txt", row.names=FALSE, quote=F, sep="\t")
+write.table(data.frame("row_names"=rownames(seqtab.nosingletons.nochim),seqtab.nosingletons.nochim),"sequence_table.16s.merged.txt", row.names=FALSE, quote=F, sep="\t")
 
 #if you must save your sequence table and load it back in before doing taxonomy assignments, here is how to reformat the object so that dada2 will accept it again
-#please note that this file will have been modified slightly after saving, with the string "SampleID" added for the first column's header (R defaults to excluding the first column header when writing files)
-seqtab.nosingletons.nochim <- fread("sequence_table.16s.txt", sep="\t", header=TRUE) #use fread to speed up read-in process
-seqtab_row_names <- seqtab.nosingletons.nochim[,1] #store row names
-seqtab.nosingletons.nochim <- as.matrix(seqtab.nosingletons.nochim) #cast as matrix
-seqtab.nosingletons.nochim <- seqtab.nosingletons.nochim[,-1] #remove sampleID column
-class(seqtab.nosingletons.nochim) <- "numeric" #make class of matrix columns numeric
-row.names(seqtab.nosingletons.nochim) <- seqtab_row.names #set row names
+seqtab.nosingletons.nochim <- fread("sequence_table.16s.merged.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
+row.names(seqtab.nosingletons.nochim) <- seqtab.nosingletons.nochim[,1] #set row names
+seqtab.nosingletons.nochim <- seqtab.nosingletons.nochim[,-1] #remove column with the row names in it
+seqtab.nosingletons.nochim <- as.matrix(seqtab.nosingletons.nochim) #cast the object as a matrix
 
 ####assign taxonomy####
 #note, this takes ages if you have a large dataset. saving the sequences as a fasta file (with writeFasta) and using QIIME's taxonomy assignment command will save you time, and is only slightly less accurate than the dada2 package's taxonomy assignment function.
@@ -246,7 +243,7 @@ taxa[NAs,1] <- "Unassigned" #apply new label to identified indices
 colnames(taxa) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7", "Accession")
 
 ####saving taxonomy data####
-write.table(taxa, "taxonomy_table.16s.txt", sep="\t", quote=F, row.names=T, col.names=T)
+write.table(data.frame("row_names"=rownames(taxa),taxa),"taxonomy_table.16s.merged.txt", row.names=FALSE, quote=F, sep="\t")
 
 #### hand off to PhyloSeq ####
 #load sample data
@@ -266,6 +263,13 @@ notinraw <- setdiff(rawmetadata$SampleID, row.names(seqtab.nosingletons.nochim))
 ps.dada2_join <- phyloseq(otu_table(seqtab.nosingletons.nochim, taxa_are_rows=FALSE), 
                           sample_data(rawmetadata), 
                           tax_table(taxa))
+
+# now replace the long ASV names (the actual sequences) with human-readable names, and save the new names and sequences as a .fasta file in your project working directory
+my_otu_table <- t(as.data.frame(unclass(otu_table(ps.dada2_join)))) #transposed (OTUs are rows) data frame. unclassing the otu_table() output avoids type/class errors later on
+ASV.seq <- as.character(unclass(row.names(my_otu_table))) #store sequences in character vector
+ASV.num <- paste0("ASV", seq(ntaxa(ps.dada2_join)), sep='') #create new names
+write.fasta(sequences=as.list(ASV.seq), names=ASV.num, "my_project.16s_ASV_sequences.fasta") #save sequences with new names in fasta format
+taxa_names(ps.dada2_join) <- ASV.num #rename your sequences in the phyloseq object
 
 # at this point I recommend saving your full unfiltered dataset in phyloseq format as a .RDS, so that you can pick up the analysis from this point easily if you decide to change your filtering criteria later on
 saveRDS(ps.dada2_join, "my_project.full_dataset.phyloseq_format.RDS")
@@ -293,12 +297,5 @@ otu_table(ps.dada2_join)[otu <= 1] <- 0
 ps.dada2_join <- ps.dada2_join %>%
   subset_taxa(Rank4 != "Chloroplast") %>% #you can chain as many of these subset_taxa calls as you like into this single command using the R pipe (%>%)
   subset_taxa(Rank5 != "Mitochondria")
-
-# now replace the long ASV names (the actual sequences) with human-readable names, and save the new names and sequences as a .fasta file in your project working directory
-my_otu_table <- t(as.data.frame(unclass(otu_table(ps.dada2_join)))) #transposed (OTUs are rows) data frame. unclassing the otu_table() output avoids type/class errors later on
-ASV.seq <- as.character(unclass(row.names(my_otu_table))) #store sequences in character vector
-ASV.num <- paste0("ASV", seq(ntaxa(ps.dada2_join)), sep='') #create new names
-write.fasta(sequences=as.list(ASV.seq), names=ASV.num, "my_project.ASV_sequences.fasta") #save sequences with new names in fasta format
-taxa_names(ps.dada2_join) <- ASV.num #rename your sequences in the phyloseq object
 
 #with your filtered phyloseq object, you are now ready to move on to whatever statistical/diversity analyses you're planning to do. please see other R script guides in the lab github.
