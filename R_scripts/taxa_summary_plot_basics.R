@@ -120,7 +120,7 @@ set.seed(15)
 newpal <- qualpal(n = numcol, colorspace = "pretty")
 
 # 4. If you want to color labels in the plot, try using a more colourblind-friendly palette:
-myPalette <- c("#00FFFF", "#56B4E9", "#000000", "#009E73", "#F0E442", "#E69F00", "#D55E00", "#CC79A7", "#999999", "#FF00FF")
+cbPalette <- c("#E69F00", "#56B4E9", "#000000", "#009E73", "#CC79A7", "#D55E00", "#0072B2", "#FFFF00", "#999999", "#FF00FF", "#F0E442", "#FFFFFF", "#00FFFF")
 
 #### Make Plots ####
 #example plot showing relative abundance of taxa through timepoints (coded as "experiment_day"), with individuals grouped together (coded as "rat_name"), and animals in the same cage grouped together as well (coded as "cage")
