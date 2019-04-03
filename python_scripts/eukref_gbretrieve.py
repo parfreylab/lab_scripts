@@ -3,7 +3,7 @@
 """
 Writen by Martin Kolisko.
 29.8.2016
-last modified: 3.4.2019 (AEM)
+last modified: 3.4.2019
 run: python eukref_gbretrieve.py -h for usage.
 This pipeline requires USEARCH (32bit version is OK) and NCBI Blast to be installed. If you are using linux and cannot
 install programs as administrator, you can install both under your account and add them to your PATH or put executables
