@@ -103,9 +103,11 @@ colnames(tax_table(project_data)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank
 plot(sort(sample_sums(project_data))) #looking at sample read counts
 summary(sample_sums(project_data))
 
-#found rarefaction curve function here: https://github.com/mahendra-mariadassou/phyloseq-extended (richness.R) 
-#to use this you have to load the "ggrare" function in from richness.R #it will throw errors if you are labeling with groups that have too few categories
+#found rarefaction curve function here: https://rdrr.io/github/gauravsk/ranacapa/src/R/ggrare.R #download this script
+#to use this you have to load the ggrare() function in from ggrare.R
 source("/path/to/phyloseq-extended/R/richness.R") # load in ggrare function
+#here are the usage instructions: https://rdrr.io/github/gauravsk/ranacapa/man/ggrare.html
+#and here is an example of usage in this workflow
 p <- ggrare(project_data, step = 1000, color = "factor", se = FALSE)
 # OPTIONAL: facet_wrap the plot
 p + facet_wrap(~FACTOR_1 + FACTOR_2)
