@@ -1,10 +1,10 @@
 #96 well plate script documentation
-#script is here: lab_share/scripts/add_barcodes.fix_platemap.py
+#script is here: lab_share/scripts/generate.plate_map.add_barcodes_to_metadata.py
 #########
 ##USAGE##
 #########
-python add_barcodes.fix_platemap.py plate_map_with_swab_ids.txt barcode_platemap_spreadsheet.txt metadata_file_no_barcodes.txt
-test example: python add_barcodes.fix_platemap.py test/SEA3platemap.txt 515f_806r_illumina_primers_515barcoded.txt test/SEA3.Seagrass_Dec2016_map.no_barcodes.txt
+python generate.plate_map.add_barcodes_to_metadata.py -g plate_map_with_swab_ids.txt -b barcode_platemap_spreadsheet.txt -m metadata_file_no_barcodes.txt
+example: python generate.plate_map.add_barcodes_to_metadata.py -g SEA3/SEA3.platemap.txt -b 515f_806r_illumina_primers_515barcoded.txt -m SEA3/SEA3.seagrass_dec2016_metadata.no_barcodes.txt
 
 ##IMPORTANT: all inputs should be tab separated text files
 ##inputs:
