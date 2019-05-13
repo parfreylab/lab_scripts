@@ -1,7 +1,7 @@
-#basic procedure for loading in a .biom file, processing data with phyloseq, doing diversity analyses
-#NOTE: THIS SCRIPT IS MEANT TO BE CHANGED TO FIT YOUR DATA. PLEASE REMEMBER TO:
-#       1. MAKE A COPY OF THIS SCRIPT IF YOU WISH TO MODIFY IT
-#       2. CHANGE ALL GENERALIZED PARAMETERS/VARIABLES (EX: "FACTOR_1") TO MATCH YOUR DATA
+####basic procedure for completing alpha and beta diversity analyses with a phyloseq object####
+#author: Evan Morien
+#last modified: May 13th, 2019
+#
 
 #### load libraries ####
 #you must install these first if you want to load the data in using phyloseq and process with deseq
@@ -29,75 +29,9 @@ library(vegan)
 #set working directory
 setwd("/path/to/working/directory/")
 
-#### load in .biom file, metadata, and (optional) phylogenetic tree ####
-# REQUIRED: Read the raw data in .biom format, and store as a phylo_seq object called "rawdata"
-rawdata <- import_biom(file.path("/file/path/", "OTU_Table.biom"), # file.path() is used for cross-platform compatibility
-                       parallel = TRUE,
-                       trim_ws = TRUE) # use multiple processor cores for shorter read times
-
-# REQUIRED: Read the raw metadata in .txt format, and store as a tibble (an improved dataframe) called "rawmetadata"
-rawmetadata <- read_delim(file = file.path("/file/path/", "metadata.txt"), # file.path() is used for cross-platform compatibility
-                          "\t", # the metadata file must be tab delimited and in .txt format
-                          escape_double = FALSE, # the imported text file does not 'escape' quotation marks by wrapping them with more quotation marks
-                          trim_ws = TRUE) # remove leading and trailing spaces from character string entries
-
-# IMPORTANT: ROW NAMES OF THE RAW METADATA FILE MUST MATCH SAMPLE NAMES FROM THE OTU TABLE. IF NOT, THE PHYLOSEQ OBJECT WILL NOT BE MERGED PROPERLY AND NON-MATCHING IDS WILL BE THROWN OUT
-# RECOMMENDED: preserve a list of samples that are unique to the OTU table and metadata file to make sure there aren't unexpected differences
-# NOTE: change MY_SAMPLE_IDs to match the column where sample IDs are stored in the metadata file. in QIIME compatible metadata files, these will be under `#SampleID`
-notinmeta <- setdiff(sample_names(rawdata), rawmetadata$MY_SAMPLE_IDs)
-# if there are any samples in "notinmeta", remove these samples from the raw data
-allsamples <- sample_names(rawdata)
-allsamples <- allsamples[!(allsamples %in% notinmeta)]
-biomdata <- prune_samples(allsamples, rawdata)
-# Find all samples in raw metadata that are not in raw data
-notinraw <- setdiff(rawmetadata$MY_SAMPLE_IDs, sample_names(rawdata))
-# Remove these samples from the metadata
-metadata <- filter(rawmetadata, !(MY_SAMPLE_IDs %in% notinraw))
-# Create vector consisting of ALL removed samples; useful for record-keeping
-symmdiff <- c(notinmeta, notinraw)
-# Format metadata tibble into the phyloseq metadata format
-metadata <- sample_data(metadata)
-# Add rownames to the phyloseq metadata which correspond to the OTU IDs
-rownames(metadata) <- metadata$MY_SAMPLE_IDs
-
-# OPTIONAL: Read in a phylogenetic tree in .tre format, and store as a tree object called "rawtreedata"
-# IMPORTANT: TREE TIPS MUST MATCH OTU IDs FROM TAXA TABLE. THIS MEANS IF YOU ARE USING AN EPA PLACEMENT TREE, YOU MUST REMOVE "QUERY___" from each tree tip label BEFORE IMPORTING if you wish to use the tree in a phyloseq object
-# file.path() is used for cross-platform compatibility
-rawtreedata <- read_tree(file.path("/file/path", "phylo_tree.tre"))
-
-#IMPORTANT NOTE: at this point you should make sure your sample IDs in the data, metadata, and tree data objects match
-
-#### OPTIONAL: drop unwanted levels from metadata now, before converting to phyloseq ####
-metadata <- metadata[which(metadata$SOME_VARIABLE != "UNWANTED VALUE"), ] #works with factor-formatted or continuous variables
-#### create phyloseq object with completed metadata, otu table, and tree ####
-project_data <- merge_phyloseq(biomdata, metadata, rawtreedata)
-#filtering steps, if not already done before loading into R
-#filter out samples with less than 1000 reads (arbitrary threshold and generally the minimum, choose your own, use sample_counts() to look at distribution of read counts per sample)
-project_data <- prune_samples(sample_sums(project_data) >= 1000, project_data) 
-# Remove OTUs with less than N total reads. (N = 250 in example) 
-project_data <- prune_taxa(taxa_sums(project_data) >= 250, project_data)
-# 16S ONLY: Remove mitochondrial and chloroplast OTUs #IMPORTANT: make sure that the filter terms will work with your taxonomy strings, and ranks
-project_data <- project_data %>%
-  subset_taxa(Rank5 != "__Mitochondria") %>% 
-  subset_taxa(Rank3 != "__Chloroplast")
-
-# 18S (and optional for 16S): Remove unwanted clades 
-project_data <- project_data %>%
-  subset_taxa(Rank5 != "UNWANTED_HOST_FAMILY") %>% 
-  subset_taxa(Rank7 != "UNWANTED_CLADE")
-
-# Preserve unassigned taxa
-project_data.unassigned <- project_data %>%
-  subset_taxa(Rank1 == "Unassigned") #works as long as your OTUs without a taxonomy assignment are labeled as "Unassigned". adjust accordingly.
-# Remove unassigned taxa
-project_data <- project_data %>%
-  subset_taxa(Rank1 != "Unassigned")
-# Remove counts that may represent noise, use a threshold (we are using a threshod of 2 reads for most datasets. be sure to choose the correct value for your own data.)
-otu <- as.data.frame(otu_table(project_data)) #get OTU table
-otu_table(project_data)[otu <= 2] <- 0 #for entries where the raw abundance of an OTU in a sample is less than N (N=2 in the example), set the raw read count to 0
-
-# OPTIONAL: modify Rank labels in taxa table (check the colnames of the tax_table(project_data) object to see if you want to change them)
-colnames(tax_table(project_data)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7")
+####IMPORTANT: first, make sure you have data in phyloseq format####
+#if you don't have a phyloseq object ready, please see the script on the lab github that details loading data from various sources into phyloseq (load_data_into_phyloseq_object.R)
+#in the examples below, your complete, filtered phyloseq object is called "project_data"
 
 #### plot rarefaction curves ####
 plot(sort(sample_sums(project_data))) #looking at sample read counts
