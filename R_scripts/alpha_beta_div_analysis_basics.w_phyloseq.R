@@ -1,7 +1,6 @@
 ####basic procedure for completing alpha and beta diversity analyses with a phyloseq object####
 #author: Evan Morien
 #last modified: May 13th, 2019
-#
 
 #### load libraries ####
 #you must install these first if you want to load the data in using phyloseq and process with deseq
@@ -39,19 +38,19 @@ summary(sample_sums(project_data))
 
 #found rarefaction curve function here: https://rdrr.io/github/gauravsk/ranacapa/src/R/ggrare.R #download this script
 #to use this you have to load the ggrare() function in from ggrare.R
-source("/path/to/phyloseq-extended/R/richness.R") # load in ggrare function
-#here are the usage instructions: https://rdrr.io/github/gauravsk/ranacapa/man/ggrare.html
+source("/path/to/ggrare.R") # load in ggrare function
+#Here are the usage instructions: https://rdrr.io/github/gauravsk/ranacapa/man/ggrare.html
 #and here is an example of usage in this workflow
-p <- ggrare(project_data, step = 1000, color = "factor", se = FALSE)
-# OPTIONAL: facet_wrap the plot
+p <- ggrare(project_data, step = 1000, color = "FACTOR_1", se = FALSE) #coloring is optional, factor must be selected
+# OPTIONAL: facet_wrap the plot to see differences according to different sample sites, types, etc.
 p + facet_wrap(~FACTOR_1 + FACTOR_2)
-#you can use the plot above to judge a rough cutoff for rarefaction. you can also do this with QIIME's alpha rarefaction script
+#you can use the plot above to judge a rough cutoff for rarefaction. it is also possible to do this with QIIME's alpha rarefaction script if you have a .biom file
 
 #you can use the "which" command like the example below to see which samples you'll lose for a given cutoff value
 which(sample_sums(project_data) < 20000)
 
 #### rarefy data ####
-set.seed(24) #you must set a numerical seed like this for reproducibility
+set.seed(24) #you must set a numerical seed like this for reproducibility, but keep in mind that if your diversity results differ significantly after changing the seed, then there may be issues with your data.
 project_data.rarefied <- rarefy_even_depth(project_data, sample.size = min(sample_sums(project_data)))
 
 #### Create Colour Palettes ####
