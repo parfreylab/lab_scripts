@@ -132,7 +132,7 @@ with open(metadatafile) as METADATA: #read in metadata file
 		data = line.strip() #strip whitespace
 		if i == 0: #if it's the first line
 			ID, restofheader = data.split('\t', 1) #split only by first tab; ID is the first element of the header
-			OUTFILE1.write("#SampleID \t BarcodeSequence \t LinkerPrimerSequence \t" + restofheader + "\n") #write the header for the output file
+			OUTFILE1.write("#SampleID \t BarcodeSequence \t LinkerPrimerSequence \t project_name \t person_responsible \t" + restofheader + "\n") #write the header for the output file
 		else:
 			sampleID, swabID, plate, barcode_well, resttoprint = data.split('\t', 4) #split the first five elements as necessary, store the rest in resttoprint
 			idmapping[swabID] = sampleID #link swab IDs to sample IDs with a dictionary
@@ -145,7 +145,7 @@ with open(metadatafile) as METADATA: #read in metadata file
 				barcode = barcodemap[wellR.lower(), wellC] #retrieve barcode from dictionary 'barcodemap' using the well column and row
 				#print "trying to match well %s on plate %s with swabID %s and sampleID %s, here is the match: %s and here is the barcode: %s" % (barcode_well, plate, swabID, sampleID, wellRC, barcode)
 				OUTFILE1.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % 
-					(sampleID, barcode, linkerprimerseq, swabID, plate, well, projectname, personresponsible, resttoprint)) #write all collected info to the output file
+					(sampleID, barcode, linkerprimerseq, projectname, personresponsible, swabID, plate, well, resttoprint)) #write all collected info to the output file
 			except KeyError: #if we encounter a sample ID in the metadata file but not in the platemap, continue running and do not crash.
 				print "sample %s not on platemap" % sampleID
 				continue
