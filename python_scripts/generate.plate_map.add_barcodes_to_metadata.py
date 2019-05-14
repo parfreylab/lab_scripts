@@ -3,7 +3,8 @@ import argparse
 import os.path
 
 __author__ = "Kevin Chan"
-__email__ = "kevchan1@alumni.ubc.ca"
+__maintainer__ = "Evan Morien"
+__contact_email__ = "morien@zoology.ubc.ca"
 
 ####a script to create an analysis-ready mapping file and platemap with descriptive names from 96 well plate metadata files (metadata file, plate map, barcode plate spreadsheet -> mapping file w metadata & barcodes, plate map with descriptive names)####
 ##IMPORTANT: all inputs should be tab separated text files
@@ -15,8 +16,8 @@ __email__ = "kevchan1@alumni.ubc.ca"
 #########
 ##USAGE##
 #########
-#python /path/to/add_barcocdes.fix_platemap.py plate_map_with_swab_ids.txt barcode_platemap_spreadsheet.txt metadata_file_no_barcodes.txt
-#test example: python add_barcodes.fix_platemap.py -g Jordan_Hamden_Mouse_Cortisol_16s_plate_map.txt -b 515f_806r_illumina_primers_515barcoded.txt -m Jordan_Hamden_Mouse_Cortisol_16s.txt
+#python /path/to/add_barcocdes.fix_platemap.py -g plate_map_with_swab_ids.txt -b barcode_platemap_spreadsheet.txt -m metadata_file_no_barcodes.txt -n project_name -p person_responsible
+#test example: python add_barcodes.fix_platemap.py -g 16s_plate_map.txt -b 515f_806r_illumina_primers_515barcoded.txt -m 16s_mapping_file.txt -n my_16s_project -p my_name
 #IMPORTANT: see README for rules on file formatting
 
 print "run: python add_barcodes.fix_platemap.py -h for help."
@@ -41,6 +42,16 @@ requiredargs.add_argument( #metadatafile. user defined.
 	"--metadatafile",
 	help = "Path to metadata file, string. Samples in rows, metadata in columns. You can add whatever metadata you like, but the first few columns must fit what's described in the README file for this script.",
 	required = True)
+requiredargs.add_argument( #project name argument. user defined.
+	"-n",
+	"--projectname",
+	help = "Name of the project.",
+	required = True)
+requiredargs.add_argument( #person responsible argument. user defined.
+	"-p",
+	"--personresponsible",
+	help = "Name of the person responsible for this project.",
+	required = True)
 parser.add_argument( #outputpath. user defined. optional.
 	"-o",
 	"--outputpath",
@@ -51,6 +62,8 @@ args = parser.parse_args()
 gridfile = args.gridfile
 barcodefile = args.barcodefile
 metadatafile = args.metadatafile
+projectname = args.projectname
+personresponsible = args.personresponsible
 outputpath = args.outputpath
 
 header = []
@@ -95,7 +108,8 @@ with open(barcodefile) as BARCODES: #open barcode file
 			if match: #if we have a well ID
 				wellRC = match.groups() #split the matched groups into letters (well row) and numbers (well column) (ex: 'A12' becomes A & 12)
 				wellR, wellC = wellRC #list wellRC becomes strings wellR and wellC
-				barcodemap[wellR, wellC] = golaybarcode #dictionary is ready to be accessed by column and row names, same structure as above loop for grid file
+				#print "here is our barcode well: %s%s" % (wellR.lower(),wellC)
+				barcodemap[wellR.lower(), wellC] = golaybarcode #dictionary is ready to be accessed by column and row names, same structure as above loop for grid file #ensure that we're using lower case letters for the barcode wells
 			counter += 1 #increment a counter so we know how many entries we've got in the barcode file that match our plate. should be 96 for each plate.
 BARCODES.close()
 print "there are %d entries in the barcode spreadsheet for plate %s" % (counter, plateno)
@@ -103,7 +117,8 @@ print "if there are fewer than 96 entries for the above plate then there is a pr
 
 #third part of the script: read in metadata, add barcodes to it, print out mapping file with barcodes in, new platemap with sample IDs in.
 #read metadata file without barcodes. needs the following columns:
-##header## sampleID swabID plate project_name person_responsible.
+##header## sampleID swabID plate
+
 idmapping = {}
 header = ""
 linkerprimerseq = 'na'
@@ -119,7 +134,7 @@ with open(metadatafile) as METADATA: #read in metadata file
 			ID, restofheader = data.split('\t', 1) #split only by first tab; ID is the first element of the header
 			OUTFILE1.write("#SampleID \t BarcodeSequence \t LinkerPrimerSequence \t" + restofheader + "\n") #write the header for the output file
 		else:
-			sampleID, swabID, plate, barcode_well, project_name, person_responsible, resttoprint = data.split('\t', 6) #split the first five elements as necessary, store the rest in resttoprint
+			sampleID, swabID, plate, barcode_well, resttoprint = data.split('\t', 4) #split the first five elements as necessary, store the rest in resttoprint
 			idmapping[swabID] = sampleID #link swab IDs to sample IDs with a dictionary
 			try: #try to retrieve well ID from dictionary and write to the outfile
 				well = wellmap[swabID] #retrieve well ID from wellmap dictionary
@@ -127,9 +142,10 @@ with open(metadatafile) as METADATA: #read in metadata file
 				if match:
 					wellRC = match.groups() #split the matched groups into letters (well row) and numbers (well column) (ex: 'A12' becomes A & 12)
 					wellR, wellC = wellRC #list wellRC becomes strings wellR and wellC
-				barcode = barcodemap[wellR, wellC] #retrieve barcode from dictionary 'barcodemap' using the well column and row
+				barcode = barcodemap[wellR.lower(), wellC] #retrieve barcode from dictionary 'barcodemap' using the well column and row
+				#print "trying to match well %s on plate %s with swabID %s and sampleID %s, here is the match: %s and here is the barcode: %s" % (barcode_well, plate, swabID, sampleID, wellRC, barcode)
 				OUTFILE1.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % 
-					(sampleID, barcode, linkerprimerseq, swabID, plate, well, project_name, person_responsible, resttoprint)) #write all collected info to the output file
+					(sampleID, barcode, linkerprimerseq, swabID, plate, well, projectname, personresponsible, resttoprint)) #write all collected info to the output file
 			except KeyError: #if we encounter a sample ID in the metadata file but not in the platemap, continue running and do not crash.
 				print "sample %s not on platemap" % sampleID
 				continue
@@ -146,7 +162,7 @@ except AttributeError:
 	OUTFILE2 = open(platename + ".platemap.w_sample_names.txt", "w") #create an outfile, will be created in the working directory.
 OUTFILE2.write("Plate:\t" + platename + "\nPlate_#:\t" + plateno + "\n") #write in the plate info on two header lines
 colnames = ["1","2","3","4","5","6","7","8","9","10","11","12"]
-rownames = ["A","B","C","D","E","F","G","H"]
+rownames = ["a","b","c","d","e","f","g","h"]
 colnamestoprint = "\t".join(colnames)
 OUTFILE2.write("\t" + colnamestoprint + "\n") #print the column names on the next line
 for row in rownames: #for each row in the file

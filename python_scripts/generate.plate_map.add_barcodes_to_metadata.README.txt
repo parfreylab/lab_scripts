@@ -3,8 +3,8 @@
 #########
 ##USAGE##
 #########
-python generate.plate_map.add_barcodes_to_metadata.py -g plate_map_with_swab_ids.txt -b barcode_platemap_spreadsheet.txt -m metadata_file_no_barcodes.txt
-example: python generate.plate_map.add_barcodes_to_metadata.py -g SEA3/SEA3.platemap.txt -b 515f_806r_illumina_primers_515barcoded.txt -m SEA3/SEA3.seagrass_dec2016_metadata.no_barcodes.txt
+python generate.plate_map.add_barcodes_to_metadata.py -g plate_map_with_swab_ids.txt -b barcode_platemap_spreadsheet.txt -m metadata_file_no_barcodes.txt -n project_name -p person_responsible
+example: python generate.plate_map.add_barcodes_to_metadata.py -g SEA3/SEA3.platemap.txt -b 515f_806r_illumina_primers_515barcoded.txt -m SEA3/SEA3.seagrass_dec2016_metadata.no_barcodes.txt -n SEA3 -p Rhea_Sanders
 
 ##IMPORTANT: all inputs should be tab separated text files
 ##inputs:
@@ -16,8 +16,8 @@ OUTPUT	1. A mapping file in plain text format, now with barcodes plus existing m
 	2. A copy of the platemap (grid format) with sampleIDs instead of swabIDs. 
 	Output files will appear in the same directory as the input platemap.
 
-*please see the example platemap for a template on formatting this file. your file must conform to the template or the script will not work.
-** header line of this file must first contain the following columns in this order: #SampleID swabID plate barcode_well project_name person_responsible
+*please see the example platemap below for a template on formatting this file. your file must conform to the template or the script will not work.
+** header line of this file must first contain the following columns in this order: #SampleID, swabID, plate, barcode_well
    other columns after are permitted and will be preserved in the order they appear in the input. if #SampleID and swabID are not different these two columns can contain the same data
 
 #example plate map formatting# your plate map must conform exactly to this template, with tab separated values on each line
