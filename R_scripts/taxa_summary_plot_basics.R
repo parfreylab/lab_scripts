@@ -1,6 +1,9 @@
-#####################################################################################
-##General Framework for Making Taxa Summary Plots from a QIIME-formatted .biom File##
-#####################################################################################
+##########################################################################
+##General Framework for Making Taxa Summary Plots From a Phyloseq Object##
+##########################################################################
+#author: Evan Morien
+#last modified: May 17th, 2019
+
 #recommend using RStudio for this
 #NOTE: THIS SCRIPT IS MEANT TO BE CHANGED TO FIT YOUR DATA. PLEASE REMEMBER TO:
 #       1. MAKE A COPY OF THIS SCRIPT IF YOU WISH TO MODIFY IT
@@ -28,119 +31,65 @@ theme_set(theme_bw())
 setwd("/path/to/working/directory")
 
 #### Load Required/Optional Files ####
-# REQUIRED: Read the raw data in .biom format, and store as a phylo_seq object called "rawdata"
-rawdata <- import_biom(file.path("relative/or/absolute/path/to/", "OTU_table.w_taxa.biom"), # file.path() is used for cross-platform compatibility
-                       parallel = TRUE,
-                       trim_ws = TRUE) # use multiple processor cores for shorter read times
-
-# REQUIRED: Read the raw metadata in .txt format, and store as a tibble (an improved dataframe) called "rawmetadata"
-rawmetadata <- read_delim(file = file.path("relative/or/absolute/path/to/", "metadata.complete.txt"), # file.path() is used for cross-platform compatibility
-                          "\t", # the text file is tab delimited
-                          escape_double = FALSE, # the imported text file does not 'escape' quotation marks by wrapping them with more quotation marks
-                          trim_ws = TRUE) # remove leading and trailing spaces from character string entries
-
-# OPTIONAL: Read in the raw phylogenetic tree in .tre format, and store as a tree object called "rawtreedata"
-# IMPORTANT: TREE TIPS MUST MATCH OTU IDs FROM TAXA TABLE. THIS MEANS IF YOU ARE USING AN EPA PLACEMENT TREE, YOU MUST REMOVE "QUERY___" from each tree tip label BEFORE IMPORTING if you wish to use the tree in a phyloseq object
-# file.path() is used for cross-platform compatibility
-rawtreedata <- read_tree(file.path("tree", "16s_makephylo_fasttree.tre"))
-
-#### Initial Data Processing ####
-notinmeta <- setdiff(sample_names(rawdata), rawmetadata$MY_SAMPLE_IDs)
-# if there are any samples in "notinmeta", remove these samples from the raw data
-allsamples <- sample_names(rawdata)
-allsamples <- allsamples[!(allsamples %in% notinmeta)]
-biomdata <- prune_samples(allsamples, rawdata)
-# Find all samples in raw metadata that are not in raw data
-notinraw <- setdiff(rawmetadata$MY_SAMPLE_IDs, sample_names(rawdata))
-# Remove these samples from the metadata
-metadata <- filter(rawmetadata, !(MY_SAMPLE_IDs %in% notinraw))
-# Create vector consisting of ALL removed samples; useful for record-keeping
-symmdiff <- c(notinmeta, notinraw)
-# Format metadata tibble into the phyloseq metadata format
-metadata <- sample_data(metadata)
-# Add rownames to the phyloseq metadata which correspond to the OTU IDs
-rownames(metadata) <- metadata$MY_SAMPLE_IDs
-
-#### create phyloseq object with completed metadata, otu table, and tree ####
-project_data <- merge_phyloseq(biomdata, metadata, rawtreedata)
-#filtering steps, if not already done before loading into R
-#filter out samples with less than 1000 reads (arbitrary threshold and generally the minimum, choose your own, use sample_counts() to look at distribution of read counts per sample)
-project_data <- prune_samples(sample_sums(project_data) >= 1000, project_data) 
-# Remove OTUs with less than N total reads. (N = 250 in example) 
-project_data <- prune_taxa(taxa_sums(project_data) >= 250, project_data)
-# 16S ONLY: Remove mitochondrial and chloroplast OTUs #IMPORTANT: make sure that the filter terms will work with your taxonomy strings, and ranks
-project_data <- project_data %>%
-  subset_taxa(Rank5 != "__Mitochondria") %>% 
-  subset_taxa(Rank3 != "__Chloroplast")
-
-# 18S (and optional for 16S): Remove unwanted clades 
-project_data <- project_data %>%
-  subset_taxa(Rank5 != "UNWANTED_HOST_FAMILY") %>% 
-  subset_taxa(Rank7 != "UNWANTED_CLADE")
-
-# Preserve unassigned taxa
-project_data.unassigned <- project_data %>%
-  subset_taxa(Rank1 == "Unassigned") #works as long as your OTUs without a taxonomy assignment are labeled as "Unassigned". adjust accordingly.
-# Remove unassigned taxa
-project_data <- project_data %>%
-  subset_taxa(Rank1 != "Unassigned")
-# Remove counts that may represent noise, use a threshold (we are using a threshod of 2 reads for most datasets. be sure to choose the correct value for your own data.)
-otu <- as.data.frame(otu_table(project_data)) #get OTU table
-otu_table(project_data)[otu <= 2] <- 0 #for entries where the raw abundance of an OTU in a sample is less than N (N=2 in the example), set the raw read count to 0
-
-# OPTIONAL: modify Rank labels in taxa table (check the colnames of the tax_table(project_data) object to see if you want to change them)
-colnames(tax_table(project_data)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7")
+#please see the script "load_data_into_phyloseq_object.R" for instructions on loading and filtering your data using phyloseq. Use the phyloseq object you've filtered as input for the next section of this script.
 
 #### Create Plotting Objects ####
 # 1. reshape data based on taxonomic level you are interested in
-family_plot <- project_data %>%
+taxonomy_plot_obj <- project_data %>%
   tax_glom(taxrank = "Rank5") %>%                      # agglomerate at family level
   transform_sample_counts(function(x) {x/sum(x)} ) %>%  # Transform to rel. abundance
   psmelt() %>%                                          # Melt to long format
   arrange(Rank5)
 
 # 2. make aesthetic changes to taxa rank labels, if desired:
-family_plot$Rank5 <- str_replace_all(family_plot$Rank5, "__", "") # Remove underscores
-family_plot$Rank4 <- str_replace_all(family_plot$Rank4, "__", "") # Remove underscores
-family_plot$Rank3 <- str_replace_all(family_plot$Rank3, "__", "") # Remove underscores
-family_plot$Rank2 <- str_replace_all(family_plot$Rank2, "__", "") # Remove underscores
+taxonomy_plot_obj$Rank5 <- str_replace_all(taxonomy_plot_obj$Rank5, "__", "") # Remove underscores if your taxonomy strings have them. you'd do this for every rank in turn.
+taxonomy_plot_obj$Rank4 <- str_replace_all(taxonomy_plot_obj$RankN, "STRING", "REPLACEMENT") # Generalized example of string replacement
 
 # 3. order levels you are interested in the way you would like them plotted. many ways to do this.
-family_plot$factor_N <- factor(family_plot$factor_N, levels = c("A", "B", "C", "1", "2", "3", "z", "y", "x", "w")) #method 1
-family_plot$factor_N <- factor(family_plot$factor_N, levels = sort(unique(factor(family_plot$factor_N)))) #method 2
+taxonomy_plot_obj$factor_N <- factor(taxonomy_plot_obj$factor_N, levels = c("A", "B", "C", "1", "2", "3", "z", "y", "x", "w")) #method 1
+taxonomy_plot_obj$factor_N <- factor(taxonomy_plot_obj$factor_N, levels = sort(unique(factor(taxonomy_plot_obj$factor_N)))) #method 2
 mylevels <- c("A", "B", "C", "1", "2", "3", "z", "y", "x", "w") #method 3
-family_plot$factor_N <- factor(family_plot$factor_N, levels = mylevels)
+taxonomy_plot_obj$factor_N <- factor(taxonomy_plot_obj$factor_N, levels = mylevels)
 
 #### Create Color Palette(s) ####
 # 1. identify the number of colors you need
-numcol <- length(unique(family_plot$Rank5))
+numcol <- length(unique(taxonomy_plot_obj$Rank5))
 # 2. use a number seed to determine how qualpar samples your colors from its palette
 set.seed(15)
 # 3. use qualpalr colour palettes for easily distinguishing taxa
 newpal <- qualpal(n = numcol, colorspace = "pretty")
 
-# 4. If you want to color labels in the plot, try using a more colourblind-friendly palette:
+# 4. If you want make your plot better, try using a more colourblind-friendly palette:
 cbPalette <- c("#E69F00", "#56B4E9", "#000000", "#009E73", "#CC79A7", "#D55E00", "#0072B2", "#FFFF00", "#999999", "#FF00FF", "#F0E442", "#FFFFFF", "#00FFFF")
+
+# 5. If you want to make clade-specific colour assignments, and make multiple plots that have the same colours for the same clades, the best way to do this is to create your own palette that assigns colours to clades
+#step 1: Identify unique clade names in each of your plots you plan to make (do this with the unique() function, input should be the column of the plotting object containing the clade labels)
+#step 2: Use the newpal creation code in the lines just above to make a palette with N colours, where N is the number of unique clades you need colours for.
+#step 3: The tedious part. You need to write out the palette manually. When you're done, it will look like the line of code below
+myCustomPalette <- c("clade1" = "#333BFF",  "clade2"="#BBB3FF",  "clade3" = "#CC6600" ,  "etc."="#9633FF") 
+#this palette can be as large as you like, but the more colours you add, the harder it is to discriminate them visually. I recommend 20 colours MAXIMUM.
 
 #### Make Plots ####
 #example plot showing relative abundance of taxa through timepoints (coded as "experiment_day"), with individuals grouped together (coded as "rat_name"), and animals in the same cage grouped together as well (coded as "cage")
-ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) + 
-  facet_wrap(cage~rat_name, ncol=4, strip.position = "top", drop=TRUE, scales="free") + #facet_wrap is the function for determining how plots are grouped within a multi-plot space
+ggplot(taxonomy_plot_obj, aes(x = Sample, y = Abundance, fill = Rank5)) + 
+  facet_wrap(FACTOR_1~FACTOR_2, ncol=4, strip.position = "top", drop=TRUE, scales="free") + #OPTIONAL LINE: facet_wrap is the function for determining how plots are grouped within a multi-plot space
   theme_bw() +
   theme(strip.background = element_rect(fill="white")) + #these "theme" settings determine how the facet grid looks on the plot
   theme(strip.text = element_text(colour = 'black')) +
   geom_bar(stat = "identity", width = 1.0) + #geom_bar controls the bar plots themselves
   scale_y_continuous(expand = c(0.005,0.005)) + #this controls the y axis scale, for bigger margins above and below, increase the numbers provided
-  scale_fill_manual(values = newpal$hex) + #here's where to use the color palate derived above #NOTE: to preserve colors between plots, you must use the line below
-  scale_fill_manual(values = c("clade1" = "#333BFF",  "clade2"="#BBB3FF",  "clade3" = "#CC6600" ,  "etc."="#9633FF")) #NOTE: use this to manually assign color to each clade, or use it in multiple plots to make colors uniform across many plots
+  scale_fill_manual(values = newpal$hex) + #here's where to use the raw colour palate derived above
+  scale_fill_manual(values = cbPalette) + #example with colourblind palette
+  #NOTE: to preserve colours between plots, you must use the line below, not the ones above
+  scale_fill_manual(values = myCustomPalette) + #example with custom palette
   ylab("Relative Abundance") + #x and y axis labels
-  xlab("Experiment Day") +
-  ggtitle("Taxonomic Composition of Rat Gut Bacterial Communities Grouped by Cage ~ Individual") + #plot title
+  xlab("My X Axis Label") +
+  ggtitle("My Plot Title") + #plot title
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.spacing = unit(0, "lines")) #another "theme" command. a lot of extra control can be established here. this line ensures that there is no padding in the multi-plot grid
 
-#similar example plot where the number of columns in the multi-plot is specified directly
-ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) + 
-  facet_wrap(~ rat_name, ncol=10, drop=TRUE, scales="free") + #here we only group the data by one factor, instead of two like the example above
+#similar example plot where the number of columns in the multi-plot is specified directly in the facet_wrap command
+ggplot(taxonomy_plot_obj, aes(x = Sample, y = Abundance, fill = Rank5)) + 
+  facet_wrap(~ FACTOR_1, ncol=5, drop=TRUE, scales="free") + #here we only group the data by one factor, instead of two like the example above
   theme_bw() +
   theme(strip.background = element_rect(fill="white")) +
   theme(strip.text = element_text(colour = 'black')) +
@@ -148,13 +97,13 @@ ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) +
   scale_y_continuous(expand = c(0.005,0.005)) +
   scale_fill_manual(values = newpal$hex) +
   ylab("Relative Abundance") +
-  xlab("Experiment Day") +
-  ggtitle("Taxonomic Composition of Rat Gut Bacterial Communities Through Time") +
+  xlab("My X Axis Label") +
+  ggtitle("My Plot Title") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.spacing = unit(0, "lines"))
 
 #in this example the data is grouped in such a way that the relative abundances for each sample adds to the total height of the bar they are grouped into
-ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) + 
-  facet_wrap(~ infected, drop=TRUE, scales="free") +
+ggplot(taxonomy_plot_obj, aes(x = FACTOR_N, y = Abundance, fill = Rank5)) + 
+  facet_wrap(~ FACTOR_X, drop=TRUE, scales="free") +
   theme_bw() +
   theme(strip.background = element_rect(fill="white")) +
   theme(strip.text = element_text(colour = 'black')) +
@@ -162,27 +111,13 @@ ggplot(family_plot, aes(x = experiment_day, y = Abundance, fill = Rank5)) +
   scale_y_continuous(expand = c(0.005,0.005)) +
   scale_fill_manual(values = newpal$hex) +
   ylab("Relative Abundance") +
-  xlab("Experiment Day") +
-  ggtitle("Taxonomic Composition of Rat Gut Bacterial Communities by Hymenolepis Infection Status") +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.spacing = unit(0, "lines"))
-
-#in this example the x axis labels are coloured by an additional colour palette #be careful with this setting, it may not apply the colors correctly. I have had better luck with a string of colors which I define manually, in the order I want them used in the plot.
-ggplot(family_plot, aes(x = rat_name, y = Abundance, fill = Rank5)) + 
-  facet_grid(experiment_day~., scales = "free", space = "free") + #here scales and space will do the same thing as drop and scales in the facet_wrap function. empty levels (x plotting points/values that aren't present in the facet being plotted will be dropped from the plot)
-  theme_bw() +
-  theme(strip.background = element_rect(fill="white"), axis.text.x = element_text(colour=myPalette)) +
-  theme(strip.text = element_text(colour = 'black')) +
-  geom_bar(stat = "identity", width = 1.0) +
-  scale_y_continuous(expand = c(0.01,0.01)) +
-  scale_fill_manual(values = newpal$hex) +
-  ylab("Relative Abundance") +
-  xlab("Experiment Day") +
-  ggtitle("Taxonomic Composition of Rat Gut Bacterial Communities Grouped by Experiment Day ~ Individual") +
+  xlab("FACTOR N") +
+  ggtitle("MY PLOT TITLE") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.spacing = unit(0, "lines"))
 
 #### Print Plots to PDF ####
-pdf("Taxa_summary.cage~individual.pdf", #name of file to print. can also include relative or absolute path before filename.
-    , width = 16 # define plot width and height. completely up to user.
+pdf("taxa_summary_plot_name.pdf", #name of file to print. can also include relative or absolute path before filename.
+    , width = 16 # define plot width and height (this is in Inches). completely up to user.
     , height = 9
 )
 # plot commands for an individual plot or single multi-plot go here
