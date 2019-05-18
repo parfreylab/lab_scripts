@@ -1,7 +1,7 @@
 ####BEST PRACTICES FOR DADA2 READ PROCESSING WITH 18S DATA####
 #author: Evan Morien
 #using and modifying this dada2 guide as necessary: https://benjjneb.github.io/dada2/tutorial.html
-#last modified: March 18th, 2019
+#last modified: May 17th, 2019
 
 ####READ FIRST####
 #this document is intended as a rough guide for processing 18s metabarcoding data with dada2. it is not meant to present a definitive solution for this kind of work. you will need to adjust parameters according to the dataset you are working with.
@@ -256,6 +256,24 @@ colnames(taxa) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7
 ####saving taxonomy data####
 write.table(data.frame("row_names"=rownames(taxa),taxa),"taxonomy_table.18s_merged.txt", row.names=FALSE, quote=F, sep="\t")
 
+####combine sequence and taxonomy tables into one####
+#taxa will be the rows, columns will be samples, followed by each rank of taxonomy assignment, from rank1 (domain-level) to rank7/8 (species-level), followed by accession (if applicable)
+#first check if the row names of the taxonomy table match the column headers of the sequence table
+length(which(row.names(taxa) %in% colnames(seqtab.nosingletons.nochim)))
+dim(taxa)
+dim(seqtab.nosingletons.nochim)
+#the number of taxa from the last three commands should match
+
+#now ensure that the taxa in the tables are in the same order #this should be true if you haven't reordered one or the other of these matrices inadvertently
+row.names(taxa) == colnames(seqtab.nosingletons.nochim) #IMPORTANT: only proceed if this evaluation is true for every element. if it isn't you'll need to re-order your data. I'd suggest sorting both matrices by their rows after transposing the sequence table.
+
+#as long as the ordering of taxa is the same, you can combine like this (note you need to transpose the sequence table so that the taxa are in the rows)
+sequence_taxonomy_table <- cbind(t(seqtab.nosingletons.nochim), taxa)
+colnames(sequence_taxonomy_table) #the last elements of this list should be "Rank1", "Rank2", etc, followed by "Accession"
+
+#now write to file
+write.table(data.frame("row_names"=rownames(sequence_taxonomy_table),sequence_taxonomy_table),"sequence_taxonomy_table.18s.merged.txt", row.names=FALSE, quote=F, sep="\t")
+
 #### hand off to PhyloSeq ####
 #load sample data
 rawmetadata <- read_delim(file = file.path("/projects/my_project/18s/", "mapping_file.txt"), # file.path() is used for cross-platform compatibility
@@ -428,6 +446,5 @@ colnames(taxa) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7
 
 ####saving taxonomy data####
 write.table(data.frame("row_names"=rownames(taxa),taxa),"taxonomy_table.18s.R1s.txt", row.names=FALSE, quote=F, sep="\t")
-
 
 #the handoff to phyloseq remains the same for both R1 and merged procedures, see above section.
