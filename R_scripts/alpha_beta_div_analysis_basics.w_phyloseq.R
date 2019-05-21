@@ -1,6 +1,10 @@
 ####basic procedure for completing alpha and beta diversity analyses with a phyloseq object####
 #author: Evan Morien
-#last modified: May 13th, 2019
+#last modified: May 21st, 2019
+
+#IMPORTANT NOTE:
+# for both alpha and beta diversity analyses, data should be rarefied.
+# although there is an argument to be made against rarefying for beta diversity analyses, we find that with many of our lab experiments, the bias from differentially successful sequencing (i.e. samples with many more reads than others, or many fewer) will prevent the ordination from revealing meaningful biological signals in the data.
 
 #### load libraries ####
 #you must install these first if you want to load the data in using phyloseq and process with deseq
