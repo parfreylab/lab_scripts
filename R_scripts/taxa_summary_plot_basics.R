@@ -9,6 +9,8 @@
 #       1. MAKE A COPY OF THIS SCRIPT IF YOU WISH TO MODIFY IT
 #       2. CHANGE ALL GENERALIZED PARAMETERS/VARIABLES (EX: "FACTOR_1") TO MATCH YOUR DATA
 
+#IMPORTANT NOTE: taxa summary plots should be made with non-rarefied data.
+
 #### Load R Packages #### #you must install these first if you want to make the plots with ggplot, and load the data in using phyloseq
 library(tidyverse)
 # Load the reshape2 package for converting between long and wide format data
