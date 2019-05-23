@@ -2,9 +2,9 @@
 #author: Evan Morien
 #last modified: May 13th, 2019
 
-#### For data created using the dada2 pipeline: load either .RDS or .txt formatted sequence table, taxonomy table, and metadata####
+#### For data created using the dada2 pipeline: load either .RDS (r object) or .txt formatted sequence table, taxonomy table, and metadata####
 #loading from .RDS
-object_name <- readRDS(name_of_file.RDS) #modify for each file you need to load
+object_name <- readRDS(name_of_file.RDS) #modify for whatever file you need to load
 
 
 #loading sequence/taxonomy tables from tab-delimited .txt
@@ -86,7 +86,7 @@ saveRDS(project_data, "my_project.full_dataset.phyloseq_format.RDS")
 # Remove samples with less than N reads (N=100 in example. adjust per experiment.)
 project_data <- prune_samples(sample_sums(project_data) >= 100, ps.dada2_join) #i generally err on the side of caution for 18s experiments, where low read counts can reflect low diversity/low numbers of 18s organisms in the sample, while not strictly reflecting "sample failure". for 16s, a higher threshold is better. successful samples will have more than 1000 reads, but use a plot of the sorted sample sums to find what looks like an appropriate data-informed cutoff, if possible.
 
-#OPTIONAL: Remove OTUs with less than N total reads. (N = 50 for example. adjust per experiment)
+# OPTIONAL: Remove OTUs with less than N total reads. (N = 50 for example. adjust per experiment)
 project_data <- prune_taxa(taxa_sums(project_data) >= 50, ps.dada2_join) #again, discretion is necessary here. in the dada2 pipeline, this is not necessary becasue a similar filter is applied already in the pipeline. for MED/QIIME, user's discretion.
 
 # Set aside unassigned taxa #with dada2, there may not be any unassigned taxa as dada2's RDP classifier usually ends up classifying everything. You may want to adjust this command to set aside ASVs that have no assignment beyond Rank1 instead of no assignment at Rank1.
@@ -96,11 +96,12 @@ project_data.unassigned <- project_data %>%
 project_data <- project_data %>%
   subset_taxa(Rank1 != "Unassigned")
 
-# Remove counts of 1 from OTU table #this is a de-noising procedure applicable to both dada2 and MED/QIIME produced datasets
+# zero out counts of 2 or less from OTU table
+# this is a de-noising procedure applicable to both dada2 and MED/QIIME produced datasets which minimizes cross-well contamination
 otu <- as.data.frame(otu_table(project_data))
-otu_table(project_data)[otu <= 1] <- 0
+otu_table(project_data)[otu <= 2] <- 0
 
-#additional filtering steps, if not already done before loading into R
+# additional filtering steps, if not already done before loading into R
 # 16S ONLY: Remove mitochondrial and chloroplast OTUs
 # IMPORTANT: make sure that the filter terms will work with your taxonomy strings, and ranks. mitochondria and chloroplast may be at different ranks in whatever database you are using. check your taxonomy table manually!
 project_data <- project_data %>%
@@ -108,7 +109,7 @@ project_data <- project_data %>%
   subset_taxa(Rank4 != "Chloroplast")
 
 # 18S (and optional for 16S): Remove unwanted clades
-#you can chain as many of these subset_taxa calls as you like into this single command using the R pipe (%>%)
+# you can chain as many of these subset_taxa calls as you like into this single command using the R pipe (%>%)
 project_data <- project_data %>%
   subset_taxa(RankX != "UNWANTED_CLADE") %>%
   subset_taxa(RankY != "UNWANTED_CLADE")

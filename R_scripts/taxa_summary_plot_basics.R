@@ -36,12 +36,21 @@ setwd("/path/to/working/directory")
 #please see the script "load_data_into_phyloseq_object.R" for instructions on loading and filtering your data using phyloseq. Use the phyloseq object you've filtered as input for the next section of this script.
 
 #### Create Plotting Objects ####
-# 1. reshape data based on taxonomic level you are interested in
+# 1. reshape data based on taxonomic level you are interested in, and select the top N taxa to show in the plot
 taxonomy_plot_obj <- project_data %>%
-  tax_glom(taxrank = "Rank5") %>%                      # agglomerate at family level
+  tax_glom(taxrank = "Rank5") # agglomerate at your rank of interest (Rank5 is roughly equal to "family" in our example)
+
+#OPTIONAL, OFTEN RECOMMENDED: select top taxa
+# recommend roughly 20 taxa maximum, since it becomes more difficult to distinguish colours with more taxa than that
+topOTUs <- names(sort(taxa_sums(taxonomy_plot_obj), TRUE)[1:N]) #where N is the number of taxa you want to retain for plotting purposes
+# filter taxa present to just those in the topOTUs list
+taxonomy_plot_obj <- prune_taxa(topOTUs, taxonomy_plot_obj) #note that this method of selecting the top OTUs will not show you the proportion of "non-top" OTUs in the plot. for a method that does this, see the last section of this guide.
+
+# REQUIRED: transform to relative abundance, melt to long format for plotting
+taxonomy_plot_obj <- taxonomy_plot_obj %>%
   transform_sample_counts(function(x) {x/sum(x)} ) %>%  # Transform to rel. abundance
   psmelt() %>%                                          # Melt to long format
-  arrange(Rank5)
+  arrange(Rank5)                                        # Arrange by the rank you are going to use in the plot
 
 # 2. make aesthetic changes to taxa rank labels, if desired:
 taxonomy_plot_obj$Rank5 <- str_replace_all(taxonomy_plot_obj$Rank5, "__", "") # Remove underscores if your taxonomy strings have them. you'd do this for every rank in turn.
@@ -119,8 +128,29 @@ ggplot(taxonomy_plot_obj, aes(x = FACTOR_N, y = Abundance, fill = Rank5)) +
 
 #### Print Plots to PDF ####
 pdf("taxa_summary_plot_name.pdf", #name of file to print. can also include relative or absolute path before filename.
-    , width = 16 # define plot width and height (this is in Inches). completely up to user.
-    , height = 9
+    width = 16, # define plot width and height (this is in Inches). completely up to user.
+    height = 9
 )
 # plot commands for an individual plot or single multi-plot go here
 dev.off()
+
+#### Make a plotting object that shows the proportion of "OTHER" OTUS in the bar plot (those that aren't in the top N OTUs you want to colour in) ####
+# 1. reshape data based on taxonomic level you are interested in, and select the top N taxa to show in the plot
+taxonomy_plot_obj <- project_data %>%
+  tax_glom(taxrank = "Rank5") # agglomerate at your rank of interest (Rank5 is roughly equal to "family" in our example)
+
+#OPTIONAL, OFTEN RECOMMENDED: select top taxa
+# recommend roughly 20 taxa maximum, since it becomes more difficult to distinguish colours with more taxa than that
+topOTUs <- names(sort(taxa_sums(taxonomy_plot_obj), TRUE)[1:N]) #where N is the number of taxa you want to retain for plotting purposes
+
+# REQUIRED: transform to relative abundance, melt to long format for plotting
+taxonomy_plot_obj <- taxonomy_plot_obj %>%
+  transform_sample_counts(function(x) {x/sum(x)} ) %>%  # Transform to rel. abundance
+  psmelt() %>%                                          # Melt to long format
+  arrange(Rank5)                                        # Arrange by the rank you are going to use in the plot
+
+# identify rows (taxa) in plotting object that belong to topOTUs, assign them the taxonomy string "other"
+taxonomy_plot_obj$Rank5 <- as.character(taxonomy_plot_obj$Rank5) #must assign this as character in order to introduce a new string "other"
+taxonomy_plot_obj$Rank5[-which(taxonomy_plot_obj$OTU %in% topOTUs)] <- "other"
+taxonomy_plot_obj$Rank5 <- factor(taxonomy_plot_obj$Rank5) #convert back to a factor #necessary for plotting properly
+#after this you are ready to plot
