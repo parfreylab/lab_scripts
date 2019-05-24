@@ -20,6 +20,7 @@ sample_df <- data.frame(sample_data(project_data.rarefied))
 
 #now the adonis test for things we can test for the whole experiment
 #IMPORTANT: this test is sequential, meaning that the order of the factors determines the output. Each time a factor is tested, the associated variation is removed and the next factor is tested only on the remaining variation. You must choose the order based on your knowledge of the experiment, plus your hypotheses w/r/t which factors are more important.
+#NOTE: to avoid the sequential problem, you can use the function adonis2 (but, it might take longer to run, and it can be useful to have a hypothesis to test, so be sure you are doing so for a good reason)
 res.adonis.rarefied <- adonis(project_bray.rarefied ~ FACTOR1 + FACTOR2 + FACTOR3 + etc..., data=sample_df, method="bray")
 res.adonis.rarefied #run for full description of results
 summary(res.adonis.rarefied) #run for results summary (this is less informative if I remember correctly)
