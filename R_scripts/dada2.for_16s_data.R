@@ -263,6 +263,15 @@ colnames(sequence_taxonomy_table) #the last elements of this list should be "Ran
 #now write to file
 write.table(data.frame("row_names"=rownames(sequence_taxonomy_table),sequence_taxonomy_table),"sequence_taxonomy_table.16s.merged.txt", row.names=FALSE, quote=F, sep="\t")
 
+# now replace the long ASV names (the actual sequences) with human-readable names, and save the new names and sequences as a .fasta file in your project working directory
+my_otu_table <- t(as.data.frame(seqtab.nosingletons.nochim)) #transposed (OTUs are rows) data frame. unclassing the otu_table() output avoids type/class errors later on
+ASV.seq <- as.character(unclass(row.names(my_otu_table))) #store sequences in character vector
+ASV.num <- paste0("ASV", seq(ASV.seq), sep='') #create new names
+write.fasta(sequences=as.list(ASV.seq), names=ASV.num, "~/Desktop/my_project.16s_ASV_sequences.fasta") #save sequences with new names in fasta format
+colnames(seqtab.nosingletons.nochim) <- ASV.num #rename your ASVs in the taxonomy table and sequence table objects
+row.names(taxa) <- ASV.num
+
+
 #### hand off to PhyloSeq ####
 #load sample data
 rawmetadata <- read_delim(file = file.path("/projects/my_project/16s/", "mapping_file.txt"), # file.path() is used for cross-platform compatibility
@@ -281,13 +290,6 @@ notinraw <- setdiff(rawmetadata$SampleID, row.names(seqtab.nosingletons.nochim))
 ps.dada2_join <- phyloseq(otu_table(seqtab.nosingletons.nochim, taxa_are_rows=FALSE), 
                           sample_data(rawmetadata), 
                           tax_table(taxa))
-
-# now replace the long ASV names (the actual sequences) with human-readable names, and save the new names and sequences as a .fasta file in your project working directory
-my_otu_table <- t(as.data.frame(unclass(otu_table(ps.dada2_join)))) #transposed (OTUs are rows) data frame. unclassing the otu_table() output avoids type/class errors later on
-ASV.seq <- as.character(unclass(row.names(my_otu_table))) #store sequences in character vector
-ASV.num <- paste0("ASV", seq(ntaxa(ps.dada2_join)), sep='') #create new names
-write.fasta(sequences=as.list(ASV.seq), names=ASV.num, "my_project.16s_ASV_sequences.fasta") #save sequences with new names in fasta format
-taxa_names(ps.dada2_join) <- ASV.num #rename your sequences in the phyloseq object
 
 # at this point I recommend saving your full unfiltered dataset in phyloseq format as a .RDS, so that you can pick up the analysis from this point easily if you decide to change your filtering criteria later on
 saveRDS(ps.dada2_join, "my_project.full_dataset.phyloseq_format.RDS")
