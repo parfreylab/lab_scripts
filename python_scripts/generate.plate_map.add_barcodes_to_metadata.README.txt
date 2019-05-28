@@ -12,11 +12,11 @@ example: python generate.plate_map.add_barcodes_to_metadata.py -g SEA3/SEA3.plat
 ###2. spreadsheet with barcodes in each primer plate. each plate has a unique barcode sequence
 ###3. metadata file that links swab IDs to sample names, plus other metadata. **
 
-OUTPUT	1. A mapping file in plain text format, now with barcodes plus existing metadata (named PLATENAME.mapping_file.txt, where PLATENAME is the name of the plate as entered in your completed platemap*). 
-	2. A copy of the platemap (grid format) with sampleIDs instead of swabIDs. 
+OUTPUT	1. A mapping file in plain text format, now with barcodes, primer info, project name, and person responsible, plus other existing metadata (named PROJECTNAME.PLATENAME.mapping_file.txt, where PROJECTNAME is the user-defined name of the project, and PLATENAME is the name of the plate as entered in your input platemap). 
+	2. A copy of the platemap (grid format) with sampleIDs instead of swabIDs. (named PROJECTNAME.PLATENAME.platemap.w_sample_names.txt)
 	Output files will appear in the same directory as the input platemap.
 
-*please see the example platemap below for a template on formatting this file. your file must conform to the template or the script will not work.
+* please see the example platemap below for a template on formatting this file. your file must conform to the template or the script will not work.
 ** header line of this file must first contain the following columns in this order: #SampleID, swabID, plate, barcode_well
    other columns after are permitted and will be preserved in the order they appear in the input. if #SampleID and swabID are not different these two columns can contain the same data
 

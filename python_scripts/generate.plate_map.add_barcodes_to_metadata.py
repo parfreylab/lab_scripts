@@ -13,11 +13,16 @@ __contact_email__ = "morien@zoology.ubc.ca"
 ###2. spreadsheet with barcodes in each primer plate. each plate has a unique barcode sequence
 ###3. metadata file that links swab IDs to sample names, plus other metadata.
 
+##outputs:
+###1. A mapping file in plain text format, now with barcodes, primer info, project name, and person responsible, plus other existing metadata (named PROJECTNAME.PLATENAME.mapping_file.txt, where PROJECTNAME is the user-defined name of the project, and PLATENAME is the name of the plate as entered in your input platemap). 
+###2. A copy of the platemap (grid format) with sampleIDs instead of swabIDs. (named PROJECTNAME.PLATENAME.platemap.w_sample_names.txt)
+##Output files will appear in the same directory as the input platemap.
+
 #########
 ##USAGE##
 #########
-#python /path/to/add_barcocdes.fix_platemap.py -g plate_map_with_swab_ids.txt -b barcode_platemap_spreadsheet.txt -m metadata_file_no_barcodes.txt -n project_name -p person_responsible
-#test example: python add_barcodes.fix_platemap.py -g 16s_plate_map.txt -b 515f_806r_illumina_primers_515barcoded.txt -m 16s_mapping_file.txt -n my_16s_project -p my_name
+#python /path/to/generate.plate_map.add_barcodes_to_metadata.py -g plate_map_with_swab_ids.txt -b barcode_platemap_spreadsheet.txt -m metadata_file_no_barcodes.txt -n project_name -p person_responsible
+#test example: python agenerate.plate_map.add_barcodes_to_metadata.py -g 16s_plate_map.txt -b 515f_806r_illumina_primers_515barcoded.txt -m 16s_mapping_file.txt -n my_16s_project -p my_name
 #IMPORTANT: see README for rules on file formatting
 
 print "run: python add_barcodes.fix_platemap.py -h for help."
@@ -94,14 +99,18 @@ with open(gridfile) as GRID:
 
 print "Getting data for plate number: %s" % plateno
 #read barcode spreadsheet
-##header##	plate	well	name	illumina_5_adapter	golay_barcode	forward_primer	forward_primer_linker	515f_fw_primer	pcr_primer
+##header##	plate	well	name	golay_barcode	forward_primer	reverse_primer	forward_primer_name	reverse_primer_name	rest...
 barcodemap = {}
 counter = 0
+fprimer = ""
+rpirmer = ""
+fprimername = ""
+rprimername = ""
 with open(barcodefile) as BARCODES: #open barcode file
 	for i, line in enumerate(BARCODES): #for each line
 		data = line.rstrip() #strip whitespace
 		all_in_line = data.split('\t') #split on tab
-		plate, well, name, illum5adapter, golaybarcode, fprimer, fprimerlinker, fw515primer, pcrprimer = all_in_line[0:9] #first 9 columns are useful or may be useful in the future
+		plate, well, name, golaybarcode, fprimer, rprimer, fprimername, rprimername = all_in_line[0:8] 
 		rest = all_in_line[9:] #we don't need any of this stuff now, but we could modify this script later to do other things with these extra fields if we needed to
 		if plate == plateno: #if this line is for the plate we are interested in
 			match = re.match(r"([a-z])([0-9]+)", well, re.I) #performs case-insensitive matching of letters and numbers to collect the well IDs
@@ -123,16 +132,16 @@ idmapping = {}
 header = ""
 linkerprimerseq = 'na'
 try:
-	completeName = os.path.join(outputpath, platename + ".mapping_file.txt")
+	completeName = os.path.join(outputpath, projectname + "." + platename + ".mapping_file.txt")
 	OUTFILE1 = open(completeName, "w") #create an outfile in the specified directory.
 except AttributeError:
-	OUTFILE1 = open(platename + ".mapping_file.txt", "w") #create an outfile, will be created in the working directory if unspecified.
+	OUTFILE1 = open(projectname + "." + platename + ".mapping_file.txt", "w") #create an outfile, will be created in the working directory if unspecified.
 with open(metadatafile) as METADATA: #read in metadata file
 	for i, line in enumerate(METADATA): #for each line
 		data = line.strip() #strip whitespace
 		if i == 0: #if it's the first line
 			ID, restofheader = data.split('\t', 1) #split only by first tab; ID is the first element of the header
-			OUTFILE1.write("#SampleID \t BarcodeSequence \t LinkerPrimerSequence \t project_name \t person_responsible \t" + restofheader + "\n") #write the header for the output file
+			OUTFILE1.write("#SampleID \t BarcodeSequence \t LinkerPrimerSequence \t project_name \t person_responsible \t forward_primer \t reverse_primer \t forward_primer_name \t reverse_primer_name \t" + restofheader + "\n") #write the header for the output file
 		else:
 			sampleID, swabID, plate, barcode_well, resttoprint = data.split('\t', 4) #split the first five elements as necessary, store the rest in resttoprint
 			idmapping[swabID] = sampleID #link swab IDs to sample IDs with a dictionary
@@ -144,8 +153,8 @@ with open(metadatafile) as METADATA: #read in metadata file
 					wellR, wellC = wellRC #list wellRC becomes strings wellR and wellC
 				barcode = barcodemap[wellR.lower(), wellC] #retrieve barcode from dictionary 'barcodemap' using the well column and row
 				#print "trying to match well %s on plate %s with swabID %s and sampleID %s, here is the match: %s and here is the barcode: %s" % (barcode_well, plate, swabID, sampleID, wellRC, barcode)
-				OUTFILE1.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % 
-					(sampleID, barcode, linkerprimerseq, projectname, personresponsible, swabID, plate, well, resttoprint)) #write all collected info to the output file
+				OUTFILE1.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % 
+					(sampleID, barcode, linkerprimerseq, projectname, personresponsible, fprimer, rprimer, fprimername, rprimername, swabID, plate, well, resttoprint)) #write all collected info to the output file
 			except KeyError: #if we encounter a sample ID in the metadata file but not in the platemap, continue running and do not crash.
 				print "sample %s not on platemap" % sampleID
 				continue
@@ -156,10 +165,10 @@ print "finished printing mapping file"
 
 #now print new barcode plate with descriptive sample names
 try: #this works if the user defines an output path when running the script
-	completeName = os.path.join(outputpath, platename + ".platemap.w_sample_names.txt")
+	completeName = os.path.join(outputpath, projectname + "." + platename + ".platemap.w_sample_names.txt")
 	OUTFILE2 = open(completeName, "w") #create an outfile in the specified directory.
 except AttributeError:
-	OUTFILE2 = open(platename + ".platemap.w_sample_names.txt", "w") #create an outfile, will be created in the working directory.
+	OUTFILE2 = open(projectname + "." + platename + ".platemap.w_sample_names.txt", "w") #create an outfile, will be created in the working directory.
 OUTFILE2.write("Plate:\t" + platename + "\nPlate_#:\t" + plateno + "\n") #write in the plate info on two header lines
 colnames = ["1","2","3","4","5","6","7","8","9","10","11","12"]
 rownames = ["a","b","c","d","e","f","g","h"]
