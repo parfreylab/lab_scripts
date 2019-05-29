@@ -1,7 +1,8 @@
 #####################################
 #Blastocystis screen for 16S V4 data
 #####################################
-#Dada2 processing pipeline for single end reads
+# This script runs the dada2 pipeline with single end reads with modifications to screen 16S V4 data for microbial eukaryotes
+# Your fastq files should follow the following format: SampleID_R1_001.fastq.gz, if they don't you'll need to change the pattern on line 42
 
 ######CHANGE THE VALUES BELOW#######
 PATH="/Users/parfreylab/Desktop/lab_member_files/mann" #change this to your working directory
@@ -39,7 +40,7 @@ setwd(PATH)
 #this is so dada2 can quickly iterate through all the R1 and R2 files in your read set
 path <- RAW
 list.files(path)
-fnFs <- sort(list.files(path, pattern="_1.fastq.gz", full.names = TRUE)) #change the pattern to match all your R1 files
+fnFs <- sort(list.files(path, pattern="_R1_001.fastq.gz", full.names = TRUE)) #change the pattern to match all your R1 files
 sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1) #change the delimiter in quotes and the number at the end of this command to decide how to split up the file name, and which element to extract for a unique sample name
 
 ####fastq Quality Plots####

@@ -1,7 +1,8 @@
 #####################################
 #Blastocystis screen for 16S V4 data
 #####################################
-#Dada2 pipeline for paired end reads
+# This script runs the dada2 pipeline with paired end reads with modifications to screen 16S V4 data for microbial eukaryotes
+# Your fastq files should follow the following format: SampleID_R1_001.fastq.gz SampleID_R2_001.fastq.gz, if they don't you'll need to change the pattern on lines 43 & 44
 
 ######CHANGE THE VALUES BELOW#######
 PATH="/Users/parfreylab/Desktop/lab_member_files/mann/afribiota" #change this to your working directory
@@ -39,8 +40,8 @@ setwd(PATH)
 #this is so dada2 can quickly iterate through all the R1 and R2 files in your read set
 path <- RAW
 list.files(path)
-fnFs <- sort(list.files(path, pattern="_1.fastq.gz", full.names = TRUE)) #change the pattern to match all your R1 files
-fnRs <- sort(list.files(path, pattern="_2.fastq.gz", full.names = TRUE)) #same for this pattern, for R2 files
+fnFs <- sort(list.files(path, pattern="_R1_001.fastq.gz", full.names = TRUE)) #change the pattern to match all your R1 files
+fnRs <- sort(list.files(path, pattern="_R2_001.fastq.gz", full.names = TRUE)) #same for this pattern, for R2 files
 sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1) #change the delimiter in quotes and the number at the end of this command to decide how to split up the file name, and which element to extract for a unique sample name
 
 ####fastq Quality Plots####
@@ -151,11 +152,6 @@ dadaRs <- dada(derepRs, err=errR, multithread=TRUE)
 
 dadaFs[[1]]
 dadaRs[[1]]
-
-####OPTIONAL: remove low-sequence samples before merging####
-#a "subscript out of bounds" error at the next step (merging) may indicate that you aren't merging any reads in one or more samples.
-#NB, NOT getting this error doesn't necessarily mean that all of your samples end up with more than 0 merged reads, as i found out while processing a large 18s dataset. your guess is as good as mine as to why this error does or does not appear, but filtering out the samples that cause it is necessary for completion of the pipeline.
-#samples_to_keep <- as.numeric(out[,"reads.out"]) > 100 #example of simple method used above after the filter and trim step. if you already did this but still got an error when merging, try the steps below
 
 getN <- function(x) sum(getUniques(x)) #keeping track of read retention, number of unique sequences after ASV inference
 track <- cbind(sapply(derepFs, getN), sapply(derepRs, getN), sapply(dadaFs, getN), sapply(dadaRs, getN))
