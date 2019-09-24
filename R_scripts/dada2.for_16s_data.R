@@ -247,6 +247,21 @@ colnames(taxa) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7
 ####saving taxonomy data####
 write.table(data.frame("row_names"=rownames(taxa),taxa),"taxonomy_table.16s.merged.txt", row.names=FALSE, quote=F, sep="\t")
 
+##### now replace the long ASV names (the actual sequences) with human-readable names####
+#save the new names and sequences as a .fasta file in your project working directory, and save a table that shows the mapping of sequences to new ASV names
+my_otu_table <- t(as.data.frame(seqtab.nosingletons.nochim)) #transposed (OTUs are rows) data frame. unclassing the otu_table() output avoids type/class errors later on
+ASV.seq <- as.character(unclass(row.names(my_otu_table))) #store sequences in character vector
+ASV.num <- paste0("ASV", seq(ASV.seq), sep='') #create new names
+write.table(cbind(ASV.num, ASV.seq), "sequence_ASVname_mapping.txt", sep="\t", quote=F, row.names=F, col.names=F)
+write.fasta(sequences=as.list(ASV.seq), names=ASV.num, "16s_ASV_sequences.fasta") #save sequences with new names in fasta format
+#IMPORTANT: sanity checks
+colnames(seqtab.nosingletons.nochim) == ASV.seq #only proceed if this tests as true for all elements
+row.names(taxa) == ASV.seq #only proceed if this tests as true for all elements
+
+#rename your ASVs in the taxonomy table and sequence table objects
+colnames(seqtab.nosingletons.nochim) <- ASV.num
+row.names(taxa) <- ASV.num
+
 ####combine sequence and taxonomy tables into one####
 #taxa will be the rows, columns will be samples, followed by each rank of taxonomy assignment, from rank1 (domain-level) to rank7/8 (species-level), followed by accession (if applicable)
 #first check if the row names of the taxonomy table match the column headers of the sequence table
@@ -264,15 +279,6 @@ colnames(sequence_taxonomy_table) #the last elements of this list should be "Ran
 
 #now write to file
 write.table(data.frame("row_names"=rownames(sequence_taxonomy_table),sequence_taxonomy_table),"sequence_taxonomy_table.16s.merged.txt", row.names=FALSE, quote=F, sep="\t")
-
-# now replace the long ASV names (the actual sequences) with human-readable names, and save the new names and sequences as a .fasta file in your project working directory
-my_otu_table <- t(as.data.frame(seqtab.nosingletons.nochim)) #transposed (OTUs are rows) data frame. unclassing the otu_table() output avoids type/class errors later on
-ASV.seq <- as.character(unclass(row.names(my_otu_table))) #store sequences in character vector
-ASV.num <- paste0("ASV", seq(ASV.seq), sep='') #create new names
-write.fasta(sequences=as.list(ASV.seq), names=ASV.num, "~/Desktop/my_project.16s_ASV_sequences.fasta") #save sequences with new names in fasta format
-colnames(seqtab.nosingletons.nochim) <- ASV.num #rename your ASVs in the taxonomy table and sequence table objects
-row.names(taxa) <- ASV.num
-
 
 #### hand off to PhyloSeq ####
 #load sample data
