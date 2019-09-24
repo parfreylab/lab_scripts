@@ -1,7 +1,7 @@
 ####DADA2 BEST PRACTICES FOR PROCESSING 16S SEQUENCES####
 #author: Evan Morien
 #using and modifying this dada2 guide as necessary: https://benjjneb.github.io/dada2/tutorial.html
-#last modified: May 17th, 2019
+#last modified: Sept 24th, 2019
 
 ####READ FIRST####
 #this document is intended as a rough guide for processing 16s metabarcoding data with dada2. it is not meant to present a definitive solution for this kind of work. you will need to adjust parameters according to the dataset you are working with.
@@ -315,9 +315,9 @@ ps.dada2_join.unassigned <- ps.dada2_join %>%
 ps.dada2_join <- ps.dada2_join %>%
   subset_taxa(Rank1 != "Unassigned")
 
-# Remove counts of 1 from OTU table #this is a de-noising method.
+# Remove counts of 2 from OTU table #this is a de-noising method.
 otu <- as.data.frame(otu_table(ps.dada2_join))
-otu_table(ps.dada2_join)[otu <= 1] <- 0
+otu_table(ps.dada2_join)[otu <= 2] <- 0
 
 #after denoising you can also remove ASVs that are in groups you wish to exclude (i.e. mammalia, embryophyta, etc.)
 #to do this, just determine which rank the clade is captured by, and filter like so:
