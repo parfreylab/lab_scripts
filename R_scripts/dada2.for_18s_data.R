@@ -1,7 +1,7 @@
 ####BEST PRACTICES FOR DADA2 READ PROCESSING WITH 18S DATA####
 #author: Evan Morien
 #using and modifying this dada2 guide as necessary: https://benjjneb.github.io/dada2/tutorial.html
-#last modified: May 17th, 2019
+#last modified: Oct 2nd, 2019
 
 ####READ FIRST####
 #this document is intended as a rough guide for processing 18s metabarcoding data with dada2. it is not meant to present a definitive solution for this kind of work. you will need to adjust parameters according to the dataset you are working with.
@@ -223,9 +223,8 @@ sum(seqtab.nosingletons.nochim)/sum(seqtab.nosingletons) #proportion of nonchime
 getN <- function(x) sum(getUniques(x))
 track <- cbind(out[samples_to_keep,], sapply(dadaFs[samples_to_keep], getN), sapply(dadaRs[samples_to_keep], getN), sapply(mergers, getN), rowSums(seqtab.nosingletons), rowSums(seqtab.nosingletons.nochim))
 # If processing only a single sample, remove the sapply calls: e.g. replace sapply(dadaFs, getN) with getN(dadaFs)
-track <- cbind(track, 100-track[,6]/track[,5]*100, 100-track[,7]/track[,6]*100)
-colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nosingletons", "nochimeras", "percent_singletons", "percent_chimeras")
-rownames(track) <- sample.names[samples_to_keep]
+track <- cbind(track, 100-track[,6]/track[,5]*100, 100-track[,7]/track[,6]*100, track[,7]/track[,1]*100)
+colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nosingletons", "nochimeras", "percent_singletons", "percent_chimeras", "percent_retained_of_total")
 
 ####save output from sequnce table construction steps####
 write.table(data.frame("row_names"=rownames(track),track),"read_retention.18s_merged.txt", row.names=FALSE, quote=F, sep="\t")
