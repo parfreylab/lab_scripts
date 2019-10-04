@@ -271,6 +271,10 @@ row.names(taxa) == ASV.seq #only proceed if this tests as true for all elements
 colnames(seqtab.nosingletons.nochim) <- ASV.num
 row.names(taxa) <- ASV.num
 
+#re-save sequence and taxonomy tables with updated names
+write.table(data.frame("row_names"=rownames(seqtab.nosingletons.nochim),seqtab.nosingletons.nochim),"sequence_table.18s.merged.txt", row.names=FALSE, quote=F, sep="\t")
+write.table(data.frame("row_names"=rownames(taxa),taxa),"taxonomy_table.18s_merged.txt", row.names=FALSE, quote=F, sep="\t")
+
 ####combine sequence and taxonomy tables into one####
 #taxa will be the rows, columns will be samples, followed by each rank of taxonomy assignment, from rank1 (domain-level) to rank7/8 (species-level), followed by accession (if applicable)
 #first check if the row names of the taxonomy table match the column headers of the sequence table
