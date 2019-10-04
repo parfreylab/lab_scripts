@@ -226,7 +226,7 @@ write.table(data.frame("row_names"=rownames(track),track),"read_retention.16s.tx
 write.table(data.frame("row_names"=rownames(seqtab.nosingletons.nochim),seqtab.nosingletons.nochim),"sequence_table.16s.merged.txt", row.names=FALSE, quote=F, sep="\t")
 
 #if you must save your sequence table and load it back in before doing taxonomy assignments, here is how to reformat the object so that dada2 will accept it again
-seqtab.nosingletons.nochim <- fread("sequence_table.18s.merged.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
+seqtab.nosingletons.nochim <- fread("sequence_table.16s.merged.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
 row.names(seqtab.nosingletons.nochim) <- seqtab.nosingletons.nochim[,1] #set row names
 seqtab.nosingletons.nochim <- seqtab.nosingletons.nochim[,-1] #remove column with row names in it
 seqtab.nosingletons.nochim <- as.matrix(seqtab.nosingletons.nochim) #cast the object as a matrix
@@ -249,7 +249,7 @@ colnames(taxa) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7
 write.table(data.frame("row_names"=rownames(taxa),taxa),"taxonomy_table.16s.merged.txt", row.names=FALSE, quote=F, sep="\t")
 
 #if you must read in your taxononmy table from disk (for example, if you needed to run taxonomy assignment on a different computer due to memory constraints, and then transfer the saved table back to your laptop) this is how to read and format the saved file correctly.
-taxa <- fread("taxonomy_table.18s_merged.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
+taxa <- fread("taxonomy_table.16s_merged.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
 row.names(taxa) <- taxa[,1] #set row names
 taxa <- taxa[,-1] #remove column with row names in it
 taxa <- as.matrix(taxa) #cast the object as a matrix
