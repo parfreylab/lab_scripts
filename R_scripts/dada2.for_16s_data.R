@@ -1,7 +1,7 @@
 ####DADA2 BEST PRACTICES FOR PROCESSING 16S SEQUENCES####
 #author: Evan Morien
 #using and modifying this dada2 guide as necessary: https://benjjneb.github.io/dada2/tutorial.html
-#last modified: Oct 2nd, 2019
+#last modified: Oct 3nd, 2019
 
 ####READ FIRST####
 #this document is intended as a rough guide for processing 16s metabarcoding data with dada2. it is not meant to present a definitive solution for this kind of work. you will need to adjust parameters according to the dataset you are working with.
@@ -226,10 +226,11 @@ write.table(data.frame("row_names"=rownames(track),track),"read_retention.16s.tx
 write.table(data.frame("row_names"=rownames(seqtab.nosingletons.nochim),seqtab.nosingletons.nochim),"sequence_table.16s.merged.txt", row.names=FALSE, quote=F, sep="\t")
 
 #if you must save your sequence table and load it back in before doing taxonomy assignments, here is how to reformat the object so that dada2 will accept it again
-seqtab.nosingletons.nochim <- fread("sequence_table.16s.merged.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
+seqtab.nosingletons.nochim <- fread("sequence_table.18s.merged.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
 row.names(seqtab.nosingletons.nochim) <- seqtab.nosingletons.nochim[,1] #set row names
-seqtab.nosingletons.nochim <- seqtab.nosingletons.nochim[,-1] #remove column with the row names in it
+seqtab.nosingletons.nochim <- seqtab.nosingletons.nochim[,-1] #remove column with row names in it
 seqtab.nosingletons.nochim <- as.matrix(seqtab.nosingletons.nochim) #cast the object as a matrix
+mode(seqtab.nosingletons.nochim) <- "numeric"
 
 ####assign taxonomy####
 #note, this takes ages if you have a large dataset. saving the sequences as a fasta file (with writeFasta) and using QIIME's taxonomy assignment command will save you time, and is only slightly less accurate than the dada2 package's taxonomy assignment function.
@@ -247,6 +248,13 @@ colnames(taxa) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7
 ####saving taxonomy data####
 write.table(data.frame("row_names"=rownames(taxa),taxa),"taxonomy_table.16s.merged.txt", row.names=FALSE, quote=F, sep="\t")
 
+#if you must read in your taxononmy table from disk (for example, if you needed to run taxonomy assignment on a different computer due to memory constraints, and then transfer the saved table back to your laptop) this is how to read and format the saved file correctly.
+taxa <- fread("taxonomy_table.18s_merged.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
+row.names(taxa) <- taxa[,1] #set row names
+taxa <- taxa[,-1] #remove column with row names in it
+taxa <- as.matrix(taxa) #cast the object as a matrix
+mode(taxa) <- "character"
+                                  
 ##### now replace the long ASV names (the actual sequences) with human-readable names####
 #save the new names and sequences as a .fasta file in your project working directory, and save a table that shows the mapping of sequences to new ASV names
 my_otu_table <- t(as.data.frame(seqtab.nosingletons.nochim)) #transposed (OTUs are rows) data frame. unclassing the otu_table() output avoids type/class errors later on
