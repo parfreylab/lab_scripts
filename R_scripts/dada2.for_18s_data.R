@@ -324,9 +324,9 @@ ps.dada2_join.unassigned <- ps.dada2_join %>%
 ps.dada2_join <- ps.dada2_join %>%
   subset_taxa(Rank1 != "Unassigned")
 
-# Remove counts of 1 from OTU table
+# Remove counts of 2 from OTU table #denoising procedure
 otu <- as.data.frame(otu_table(ps.dada2_join))
-otu_table(ps.dada2_join)[otu <= 1] <- 0
+otu_table(ps.dada2_join)[otu <= 2] <- 0
 
 #after denoising you can also remove ASVs that are in groups you wish to exclude (i.e. mammalia, embryophyta, etc.)
 #to do this, just determine which rank the clade is captured by, and filter like so:
