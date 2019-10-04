@@ -230,11 +230,12 @@ colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "n
 write.table(data.frame("row_names"=rownames(track),track),"read_retention.18s_merged.txt", row.names=FALSE, quote=F, sep="\t")
 write.table(data.frame("row_names"=rownames(seqtab.nosingletons.nochim),seqtab.nosingletons.nochim),"sequence_table.18s.merged.txt", row.names=FALSE, quote=F, sep="\t")
 
-#if you must save your sequence table and load it back in before doing taxonomy assignments, here is how to reformat the object so that dada2 will accept it again
+#if you must save your sequence table and load it back in before doing taxonomy assignments, here is how to read and format the object so that dada2 will accept it again
 seqtab.nosingletons.nochim <- fread("sequence_table.18s.merged.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
 row.names(seqtab.nosingletons.nochim) <- seqtab.nosingletons.nochim[,1] #set row names
 seqtab.nosingletons.nochim <- seqtab.nosingletons.nochim[,-1] #remove column with row names in it
 seqtab.nosingletons.nochim <- as.matrix(seqtab.nosingletons.nochim) #cast the object as a matrix
+mode(seqtab.nosingletons.nochim) <- "numeric"
 
 ####assign taxonomy####
 #note, this takes ages if you have a large dataset. strongly recommend doing on a multi-core machine (zoology cluster, or entamoeba in the lab). another option: saving the sequences as a fasta file (with writeFasta) and using QIIME's taxonomy assignment command will save you time, and is only slightly less accurate than the dada2 package's taxonomy assignment function (their implementation of RDP).
@@ -255,6 +256,13 @@ colnames(taxa) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7
 
 ####saving taxonomy data####
 write.table(data.frame("row_names"=rownames(taxa),taxa),"taxonomy_table.18s_merged.txt", row.names=FALSE, quote=F, sep="\t")
+
+#if you must read in your taxononmy table from disk (for example, if you needed to run taxonomy assignment on a different computer due to memory constraints, and then transfer the saved table back to your laptop) this is how to read and format the saved file correctly.
+taxa <- fread("taxonomy_table.18s_merged.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
+row.names(taxa) <- taxa[,1] #set row names
+taxa <- taxa[,-1] #remove column with row names in it
+taxa <- as.matrix(taxa) #cast the object as a matrix
+mode(taxa) <- "character"
 
 ##### now replace the long ASV names (the actual sequences) with human-readable names####
 #save the new names and sequences as a .fasta file in your project working directory, and save a table that shows the mapping of sequences to new ASV names
