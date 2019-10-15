@@ -1,6 +1,6 @@
 ####code for getting your data (from MED/QIIME or dada2 pipeline) into a phyloseq object####
 #author: Evan Morien
-#last modified: May 13th, 2019
+#last modified: October 15th, 2019
 
 #### For data created using the dada2 pipeline: load either .RDS (r object) or .txt formatted sequence table, taxonomy table, and metadata####
 #loading from .RDS
@@ -117,3 +117,14 @@ project_data <- project_data %>%
 # modify Rank labels in taxa table (check the colnames of the tax_table(project_data) object to see if you want to change them)
 colnames(tax_table(project_data)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7", "Accession") #SILVA ALL 16s, SILVA v132 18s
 colnames(tax_table(project_data)) <- c("Rank1", "Rank2", "Rank3", "Rank4", "Rank5", "Rank6", "Rank7", "Rank8", "Accession") #SILVA 128 18s, PR2 2019
+
+#### accessing data within phyloseq objects ####
+#this can be a bit tricky, but you just have to treat the component parts of the S4 object as data frames
+#it is sometimes necessary to strip the class information out with "unclass()" before viewing the data tables with the View() function
+#for viewing
+View(as.data.frame(unclass(sample_data(project_data))))
+View(as.data.frame(unclass(otu_table(project_data))))
+View(as.data.frame(unclass(tax_table(project_data))))
+
+#creating separate data frames for use with other programs
+my_sample_data <- as.data.frame(unclass(sample_data(project_data))) #etc
