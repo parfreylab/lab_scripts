@@ -7,10 +7,12 @@
 #       1. MAKE A COPY OF THIS SCRIPT IF YOU WISH TO MODIFY IT
 #       2. CHANGE ALL GENERALIZED PARAMETERS/VARIABLES (EX: "FACTOR_1") TO MATCH YOUR DATA
 
-
-
 library(phyloseq)
 library(vegan)
+
+####IMPORTANT: first, make sure you have data in phyloseq format####
+#if you don't have a phyloseq object ready, please see the script on the lab github that details loading data from various sources into phyloseq (load_data_into_phyloseq_object.R)
+#in the examples below, your complete, filtered phyloseq object is called "project_data.rarefied"
 
 #### analysis: PERMANOVA to see which factors contribute significant to the variation observed in the dataset ####
 #using the vegan "adonis" function, we can calculate relationship of each factor with variance w/in the data
@@ -32,3 +34,9 @@ beta.FACTOR2 <- betadisper(project_bray.rarefied, sample_df$FACTOR2)
 permutest(beta.FACTOR2)
 beta.FACTOR3 <- betadisper(project_bray.rarefied, sample_df$FACTOR3)
 permutest(beta.FACTOR3)
+
+#### saving output of these tests ####
+# you can use the "capture.output()" function to save the output of any of the testing and summary commands above, like so
+capture.output(file="beta_disp.output.txt", permutest(beta.FACTOR3))
+# where the form of the command is always:
+capture.output(file="name_of_output_file", command)
