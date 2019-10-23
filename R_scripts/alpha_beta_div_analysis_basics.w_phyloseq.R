@@ -1,6 +1,6 @@
 ####basic procedure for completing alpha and beta diversity analyses with a phyloseq object####
 #author: Evan Morien
-#last modified: May 21st, 2019
+#last modified: October 22nd, 2019
 
 #IMPORTANT NOTE:
 # for both alpha and beta diversity analyses, data should be rarefied.
@@ -51,7 +51,7 @@ p + facet_wrap(~FACTOR_1 + FACTOR_2)
 #you can use the plot above to judge a rough cutoff for rarefaction. it is also possible to do this with QIIME's alpha rarefaction script if you have a .biom file
 
 #you can use the "which" command like the example below to see which samples you'll lose for a given cutoff value
-which(sample_sums(project_data) < 20000)
+which(sample_sums(project_data) < 2000)
 
 #### rarefy data ####
 set.seed(24) #you must set a numerical seed like this for reproducibility, but keep in mind that if your diversity results differ significantly after changing the seed, then there may be issues with your data.
@@ -82,7 +82,7 @@ p + geom_boxplot(outlier.colour = "red", outlier.shape = 13) +
   labs(title="Alpha Diversity, Factor N, Chao1", x="Factor1 ~ Factor2", y="Richness/Alpha Diversity")
 dev.off()
 #### calculate alpha diversity and add it as a column in the metadata ####
-project_data.chao1 = estimate_richness(project_data.rarefied, split = TRUE, measures = c("Chao1")) #estimate richness
+project_data.chao1 <- estimate_richness(project_data.rarefied, split = TRUE, measures = c("Chao1")) #estimate richness
 sample_data(project_data.rarefied)$chao1 <- project_data.chao1$Chao1 #add to metadata (the rows are in the same order already)
 sample_data(project_data.rarefied)$chao1 <- as.numeric(sample_data(project_data.rarefied)$chao1)
 
@@ -96,10 +96,10 @@ p + geom_boxplot() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 
 #### beta diversity (NMDS, PCoA, etc.) ####
-#do ordinations
+#do ordinations #be sure to use rarefied data for beta diversity analyses
 set.seed(24)
 NMDS.bray <- ordinate(
-  physeq = project_data, 
+  physeq = project_data.rarefied, 
   method = "NMDS", 
   distance = "bray"
 ) # you can choose different methods and distance metrics, see the ordinate help page for details. this function works with "phyloseq" class objects.
@@ -112,7 +112,7 @@ row.names(bray) == row.names(NMDS) #sanity check #tests as true
 NMDS$NMDS.bray1 <- bray$MDS1
 NMDS$NMDS.bray2 <- bray$MDS2
 #OPTIONAL: sort data for better looking easier to read plots
-NMDS.sort <- NMDS[order(NMDS$FACTOR_1, NMDS$FACTOR_2),]
+NMDS.sort <- NMDS[order(NMDS$FACTOR_1, NMDS$FACTOR_2),] #if you do create a sorted plotting object, remember to modify the plots below so that you are using it as the input, not the unsorted table
 
 #plain NMDS plot colored by "FACTOR_1" and shaped by "FACTOR_2"
 pdf("NMDS.expt_name.FACTOR_1_color.FACTOR_2_shape.pdf"
@@ -120,21 +120,12 @@ pdf("NMDS.expt_name.FACTOR_1_color.FACTOR_2_shape.pdf"
     , height = 9 # Change to 10; make it taller
 )
 p <- ggplot(NMDS, aes(x=NMDS.bray1, y=NMDS.bray2, shape = FACTOR_2, color = FACTOR_1)) # change the first argument to NMDS.sort if the optional command was ran
-p + geom_point(size=4) + scale_shape_manual(values=1:nlevels(NMDS.sort$FACTOR_2)) +
+p + geom_point(size=4) + scale_shape_manual(values=1:nlevels(NMDS$FACTOR_2)) +
   labs(title="NMDS Factor1 & Factor2") + 
   scale_fill_manual(values=cbPalette) + scale_colour_manual(values=cbPalette) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 dev.off()
 
-#facet wrapped NMDS plot
-pdf("NMDS.expt_name.FACTOR_1~FACTOR_2.pdf"
-    , width = 16 # Default is 7
-    , height = 8 # Change to 10; make it taller
-)
-p <- ggplot(NMDS.sort, aes(x=NMDS.bray1, y=NMDS.bray2, color = FACTOR_3, shape = FACTOR_2))
-p + facet_wrap(~FACTOR_1) + geom_point(size=4) +
-  theme(strip.background = element_rect(fill="white"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.spacing = unit(0.2, "lines")) +
-  labs(title="NMDS Factor2 & Factor3 ~ Factor1") + 
-  scale_fill_manual(values=cbPalette) + scale_colour_manual(values=cbPalette) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
-dev.off()
+#NOTE: beta div ordination plots like the one above are endlessly customizable, if you want to do something like draw lines between points to show how a time series connects, or make the points different sizes based on a factor, or any other advanced plotting technique, there will be examples online describing how to do this with ggplot
+
+####for statistical tests on beta diversity data (permanova, beta dispersion test), please see the lab script permanova.beta_dispersion_test.basics.R ####
