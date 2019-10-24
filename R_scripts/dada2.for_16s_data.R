@@ -328,7 +328,7 @@ ps.dada2_join <- ps.dada2_join %>%
   subset_taxa(Rank1 != "Unassigned")
 
 # Remove counts of 2 from OTU table #this is a de-noising method.
-otu <- as.data.frame(otu_table(ps.dada2_join))
+otu <- as.data.frame(unclass(otu_table(ps.dada2_join)))
 otu_table(ps.dada2_join)[otu <= 2] <- 0
 
 #after denoising you can also remove ASVs that are in groups you wish to exclude (i.e. mammalia, embryophyta, etc.)
