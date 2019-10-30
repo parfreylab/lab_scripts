@@ -5,16 +5,16 @@
 
 ####READ FIRST####
 #this document is intended as a rough guide for processing 16s metabarcoding data with dada2. it is not meant to present a definitive solution for this kind of work. you will need to adjust parameters according to the dataset you are working with.
-#best practices in our lab will involve the analysis of a merged read set
-#to run this pipeline on forward reads only, just skip steps that involve the reverse reads, and skip the merging step, modifying code as necessary.
+#best practices for 16s reads in our lab will involve the analysis of a merged read set
+#to run this pipeline on forward reads only, just skip steps that involve the reverse reads, and skip the merging step, modifying code as necessary. should you need it, the code for an R1 only analysis section of the pipeline is present in the lab's 18s dada2 R guide.
 
-#it's necessary to filter out low-abundance ASVs after constructing the sequence table in dada2. dada2 developers do not provide any advice on this front, but the process is outlined below in the section after sequence table construction
+#it's necessary to filter out low-abundance/prevalence ASVs after constructing the sequence table in dada2. dada2 developers do not provide any advice on this front, but the process is outlined below in the section after sequence table construction
 
 ####Dependencies and Requirements####
-#the pipeline requires that you begin with demultiplexed fastq files (one fastq per sample)
+#the pipeline requires that you begin with demultiplexed, gzipped fastq files (one fastq per sample)
 
 ####IMPORTANT EXPERIMENT-SPECIFIC INFO####
-#datasets PCRd at Dalhousie need to be primer trimmed. Please use the primer trimming guide for dada2 in our lab github R scripts folder if you need help primer-trimming your fastq files.
+#Unless otherwise noted by the sequencing facility, all datasets should be primer-trimmed. There is code below to primer trim your files. However, if you need additional help there is further documentation and explanation of primer trimming with dada2 in their recommended ITS sequence processing pipeline.
 
 ####Libraries####
 library(dada2)
@@ -30,7 +30,6 @@ library(viridis)
 library(ShortRead)
 library(Biostrings)
 library(seqinr)
-
 
 ####Environment Setup####
 theme_set(theme_bw())
@@ -314,10 +313,10 @@ ps.dada2_join <- phyloseq(otu_table(seqtab.nosingletons.nochim, taxa_are_rows=FA
 # at this point I recommend saving your full unfiltered dataset in phyloseq format as a .RDS, so that you can pick up the analysis from this point easily if you decide to change your filtering criteria later on
 saveRDS(ps.dada2_join, "my_project.full_dataset.phyloseq_format.RDS")
                                        
-# Remove samples with less than N reads (N=100 in example. adjust per experiment.)
+#OPTIONAL: Remove samples with less than N reads (N=100 in example. adjust per experiment.)
 ps.dada2_join <- prune_samples(sample_sums(ps.dada2_join) >= 100, ps.dada2_join)
 
-#OPTIONA: Remove OTUs with less than N total reads. (N = 50 for example. adjust per experiment)
+#OPTIONAL: Remove OTUs with less than N total reads. (N = 50 for example. adjust per experiment)
 ps.dada2_join <- prune_taxa(taxa_sums(ps.dada2_join) >= 50, ps.dada2_join)
 
 # Set aside unassigned taxa #with dada2, there may not be any unassigned taxa as dada2's RDP classifier usually ends up classifying everything. You may want to adjust this command to set aside ASVs that have no assignment beyond Rank1 instead of no assignment at Rank1.
@@ -327,15 +326,18 @@ ps.dada2_join.unassigned <- ps.dada2_join %>%
 ps.dada2_join <- ps.dada2_join %>%
   subset_taxa(Rank1 != "Unassigned")
 
-# Remove counts of 2 from OTU table #this is a de-noising method.
+# Remove counts of 2 or less from OTU table #this is a de-noising method.
 otu <- as.data.frame(unclass(otu_table(ps.dada2_join)))
 otu_table(ps.dada2_join)[otu <= 2] <- 0
 
 #after denoising you can also remove ASVs that are in groups you wish to exclude (i.e. mammalia, embryophyta, etc.)
 #to do this, just determine which rank the clade is captured by, and filter like so:
-# Remove mitochondrial and chloroplast OTUs
+#REQUIRED FOR 16s: Remove mitochondrial and chloroplast OTUs
 ps.dada2_join <- ps.dada2_join %>%
   subset_taxa(Rank4 != "Chloroplast") %>% #you can chain as many of these subset_taxa calls as you like into this single command using the R pipe (%>%)
   subset_taxa(Rank5 != "Mitochondria")
 
 #with your filtered phyloseq object, you are now ready to move on to whatever statistical/diversity analyses you're planning to do. please see other R script guides in the lab github.
+#recommend saving the filtered dataset as well, if needed
+saveRDS(ps.dada2_join, "my_project.full_dataset.phyloseq_format.filtered.RDS")
+

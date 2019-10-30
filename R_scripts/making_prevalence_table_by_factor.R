@@ -1,11 +1,11 @@
 #basic procedure for calculating relative abundance and prevalence according to a metadata category
 #NOTE: THIS SCRIPT IS MEANT TO BE CHANGED TO FIT YOUR DATA. PLEASE REMEMBER TO:
-#       1. MAKE A COPY OF THIS SCRIPT INTO YOUR WORKING DIRECTORY
+#       1. MAKE A COPY OF THIS SCRIPT IN YOUR WORKING DIRECTORY
 #       2. CHANGE ALL GENERALIZED PARAMETERS/VARIABLES (EX: "FACTOR") TO MATCH YOUR DATA
-#       3. THIS CODE SUPPLEMENTS THE OTHER SCRIPTS ON THIS REPO, AND THE "project_data" OBJECT IS ONE OF CLASS PHYLOSEQ CREATED WITH, FOR EXAMPLE, THE ALPHA/BETA DIV R SCRIPT
+#       3. THIS CODE SUPPLEMENTS THE OTHER SCRIPTS ON THIS REPO, AND THE "project_data" OBJECT IS ONE OF CLASS PHYLOSEQ CREATED FOLLOWING THE PROCESS OUTLINED IN load_data_into_phyloseq_object.R
 
 #AUTHOR:        Evan Morien
-#last modified: April 10th, 2018
+#last modified: October 30th, 2019
 
 #### calculate relative abundance for FACTOR ####
 ra.FACTOR <- project_data %>%
@@ -62,6 +62,4 @@ taxa.tomerge <- taxa.tomerge %>% unite("Taxonomy", Rank1, Rank2, Rank3, Rank4, R
 new_prevalence_table <- transform(merge(ra.prev.FACTOR,taxa.tomerge,by=0,all=TRUE), row.names=Row.names, Row.names=NULL)
 
 #write otu table to file
-write.table(new_prevalence_table, file="rel_ab.prev.FACTOR_collapsed.txt", quote=F, row.names=T, col.names=T, sep="\t")
-#modify this with nano to insert tab at beginning of header line
-
+write.table(data.frame("row_names"=rownames(new_prevalence_table),new_prevalence_table),"rel_ab.prev.FACTOR_collapsed.txt", row.names=FALSE, quote=F, sep="\t")

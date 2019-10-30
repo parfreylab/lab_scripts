@@ -1,6 +1,6 @@
 #### basic analysis of processed amplicon data with DeSeq2####
 #author: Evan Morien
-#last modified: May 13th, 2019
+#last modified: October 30th, 2019
 
 #NOTE: THIS SCRIPT IS MEANT TO BE CHANGED TO FIT YOUR DATA. PLEASE REMEMBER TO:
 #       1. MAKE A COPY OF THIS SCRIPT IF YOU WISH TO MODIFY IT PERMANENTLY
@@ -32,20 +32,24 @@ library(ggplot2)
 #set working directory
 setwd("/path/to/working/directory/")
 
-### ensure you have loaded phyloseq object(s) in which contain your dataset, including taxonomy strings, sequence table, metadata, and phylogenetic tree (if applicable)####
+### ensure you have loaded into R phyloseq object(s) which contain your dataset, including taxonomy strings, sequence table, metadata, and phylogenetic tree (if applicable)####
 #instructions for creating a phyloseq object are in our lab_scripts/R_scripts github folder, in the script "load_data_into_phyloseq_object.R"
 
-####DESeq2 analysis: taxa correlated with infection and death controlling for timepoint ####
+####DESeq2 analysis preparation####
 #OPTIONAL/IF NEEDED:assign variables as either factors or numeric
+#VERY IMPORTANT: DESEQ is designed to work for factors that have two levels. if your factor that you want to test has more than two levels, you will need to select two of the levels to do the comparison, or deseq will select them for you.
 #this can be necesssary for certain types of data, and helpful if you want to control the order of factors in a deseq contrast below
-sample_data(project_data)$variable <- as.numeric(sample_data(project_data)$variable)
-sample_data(project_data)$variable3 <- factor(sample_data(project_data)$variable3, levels=c("level1", "level2"))
-##deseq##
+sample_data(project_data)$variable1 <- factor(sample_data(project_data)$variable1) #not controling levels
+sample_data(project_data)$variable3 <- factor(sample_data(project_data)$variable3, levels=c("level1", "level2")) #controling level order here
+#IMPORTANT: factors need to be watched carefully, recoding variables as factors can re-arrange data w/in the data frame if you have previously ordered it in a specific way
+
+####DESeq: taxa correlated with a binary factor ("variable3"), controlling for two other factors ("variable1" and "variable2") ####
 #parameters up front
 alpha <- 0.01 #your significance threshold for MULTIPLE TEST CORRECTED pvals
 ##OPTIONAL: SUBSET DATA BEFORE TEST
 #if i want to test only a subset of my data, i can subset it like this. in the example a time series is filtered by whether the factor "experiment_day" is greater than 4
-project_data.post_day4 <- prune_samples(sample_data(project_data)$experiment_day > 4, project_data)
+project_data.numeric_variable.greater_than_4 <- prune_samples(sample_data(project_data)$numeric_variable > 4, project_data)
+project_data.factor.only_level1 <- prune_samples(sample_data(project_data)$factor == "level1", project_data)
 
 ## OPTION 1: DESEQ RUN USING LRT MODEL ##
 dds.var3 <- phyloseq_to_deseq2(project_data, design = ~ variable1 + variable2 + variable3)
@@ -58,11 +62,19 @@ summary(res.var3, alpha = alpha)
 ## OPTION 2: DESEQ RUN USING WALD TEST ##
 dds.var3 <- phyloseq_to_deseq2(project_data, design = ~ variable1 + variable2 + variable3)
 dds.var3 <- DESeq(dds.var3, test = "Wald", fitType = "parametric")
-res.var3 <- results(dds.var3, cooksCutoff = FALSE, alpha = alpha, pAdjustMethod = "BH", contrast=c("variable3", "level2", "level1"), altHypothesis = "greaterAbs") #here "level2" is experimental and "level1" is control or baseline #here we can use "contrast" to select the comparison we are interested in
+res.var3 <- results(dds.var3, cooksCutoff = FALSE, alpha = alpha, pAdjustMethod = "BH", contrast=c("variable3", "level2", "level1"), altHypothesis = "greaterAbs") #here "level2" is experimental and "level1" is control or baseline #here we can use "contrast" to specify the comparison we are interested in
 # view a summary of the results table with a padj value < 0.01
 summary(res.var3, alpha = alpha)
 
 #for details on what the difference between the LRT and WALD tests are, see the DeSeq vignette
+
+#IMPORTANT: you may get an error like this when trying to run DESeq:
+    #estimating size factors
+    #Error in estimateSizeFactorsForMatrix(counts(object), locfunc = locfunc,  :
+    #every gene contains at least one zero, cannot compute log geometric means
+#It's then up to you to figure out why you are unable to estimate the size factors for this data, and adjust your factors or apply an alternative method to estimate the size factors.
+#You can read more about this online, especially on websites like biostars or on the bioconductor support website.
+#Michael Love, one of the main developers of DESeq2 has very extensively and thoroughly answered questions on this error.
 
 #filtering the results table #
 # reorder the results table by adjusted p-value and remove any "NA" entries
