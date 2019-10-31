@@ -1,6 +1,6 @@
 ####basic procedure for completing alpha and beta diversity analyses with a phyloseq object####
 #author: Evan Morien
-#last modified: October 22nd, 2019
+#last modified: October 30th, 2019
 
 #IMPORTANT NOTE:
 # for both alpha and beta diversity analyses, data should be rarefied.

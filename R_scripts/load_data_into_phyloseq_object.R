@@ -1,30 +1,35 @@
 ####code for getting your data (from MED/QIIME or dada2 pipeline) into a phyloseq object####
 #author: Evan Morien
-#last modified: October 15th, 2019
+#last modified: October 30th, 2019
+
+#IMPORTANT NOTE: for purposes of clarity, there are example files for each of these methods of loading in data located in the lab git repo. they are stored in the subfolder "git:parfreylab/lab_scripts/example_files". these files have the format of the output files from dada2 or MED/QIIME pipelines.
 
 #### For data created using the dada2 pipeline: load either .RDS (r object) or .txt formatted sequence table, taxonomy table, and metadata####
 #loading from .RDS
-object_name <- readRDS(name_of_file.RDS) #modify for whatever file you need to load
+phyloseq_object_name <- readRDS(name_of_file_where_you_stored_phyloseq_object.RDS) #modify for whatever file you need to load. NB this works for whatever R objects you like, you can save and load any R object, preserving all formatting, class attributes, etc and load it back in on another computer this way.
 
-
-#loading sequence/taxonomy tables from tab-delimited .txt
-seqtab.nosingletons.nochim <- fread("sequence_table.16s.merged.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
+####loading sequence/taxonomy tables from tab-delimited .txt ####
+setwd("/path/to/example_files") #to run this code, simply set the correct path for the example files that you cloned/downloaded from our lab's github repo (see line 5 of this script)
+library(phyloseq)
+library(data.table)
+library(tidyverse)
+seqtab.nosingletons.nochim <- fread("sequence_table.example.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
 row.names(seqtab.nosingletons.nochim) <- seqtab.nosingletons.nochim[,1] #set row names
 seqtab.nosingletons.nochim <- seqtab.nosingletons.nochim[,-1] #remove column with the row names in it
 seqtab.nosingletons.nochim <- as.matrix(seqtab.nosingletons.nochim) #cast the object as a matrix
 
-taxa_16s <- fread("taxonomy_table.16s.merged.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
+taxa_16s <- fread("taxonomy_table.example.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
 row.names(taxa_16s) <- taxa_16s[,1] #set row names
 taxa_16s <- taxa_16s[,-1] #remove column with the row names in it
 taxa_16s <- as.matrix(taxa_16s) #cast the object as a matrix
 
 #load sample data (from tab-delimited .txt)
-rawmetadata <- read_delim(file = file.path("/projects/my_project/16s/", "mapping_file.txt"), # file.path() is used for cross-platform compatibility
+rawmetadata <- read_delim(file = file.path("/path/to/example_files", "mapping_file.example.txt"), # file.path() is used for cross-platform compatibility
                           "\t", # the text file is tab delimited
                           escape_double = FALSE, # the imported text file does not 'escape' quotation marks by wrapping them with more quotation marks
                           trim_ws = TRUE) # remove leading and trailing spaces from character string entries
 #set row names to be sample IDs
-rownames(rawmetadata) <- rawmetadata$SampleID #change "SampleID" to whatever label your sample ID column has
+rownames(rawmetadata) <- rawmetadata$sampleID #change "SampleID" to whatever label your sample ID column has
 
 #make a note of which samples are present/absent in the metadata vs the sequence table (samples without a corresponding entry in both of these will not be included in the final phyloseq object, so correct any mislabeled samples now (the matching must be exact)
 notinmeta <- setdiff(row.names(seqtab.nosingletons.nochim), row.names(rawmetadata))
@@ -35,7 +40,7 @@ project_data <- phyloseq(otu_table(seqtab.nosingletons.nochim, taxa_are_rows=FAL
                           sample_data(rawmetadata), 
                           tax_table(taxa_16s))
 
-#### For data created with MED/QIIME pipeline: load in .biom file, metadata, and (optional) phylogenetic tree ####
+#### For data created with MED/QIIME pipeline (now obsolete): load in .biom file, metadata, and (optional) phylogenetic tree ####
 # REQUIRED: Read the raw data in .biom format, and store as a phylo_seq object called "rawdata"
 rawdata <- import_biom(file.path("/file/path/", "OTU_Table.biom"), # file.path() is used for cross-platform compatibility
                        parallel = TRUE,

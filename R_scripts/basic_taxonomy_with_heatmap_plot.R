@@ -5,7 +5,7 @@ library(phyloseq) #if you want to start with a phyloseq object
 library(ggtree) #for the plots we're making
 
 #author: evan morien
-#revision: Nov 29th, 2017
+#revision: October 30th, 2019
 #more info on different types of plots you can make with ggtree can be found in the documentation section here: https://bioconductor.org/packages/release/bioc/html/ggtree.html
 #and specificaly, here: https://bioconductor.org/packages/release/bioc/vignettes/ggtree/inst/doc/advanceTreeAnnotation.html
 
