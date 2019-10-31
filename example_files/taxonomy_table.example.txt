@@ -1,0 +1,11 @@
+row_names	Rank1	Rank2	Rank3	Rank4	Rank5	Rank6	Rank7	Rank8	Accession
+ASV1	Eukaryota	Opisthokonta	Metazoa	Mammalia	Mammalia	Vertebrata	Vertebrata	Chinchilla_lanigera	GBCC01000156.17.1875
+ASV2	Eukaryota	Opisthokonta	Metazoa	Mammalia	Mammalia	Vertebrata	Vertebrata	NA	NA
+ASV3	Eukaryota	Archaeplastida	Chloroplastida	Phragmoplastophyta	Embryophyta	Malpighiales	Manihot	Manihot_esculenta_(cassava)	JPQF01129135.297.1940
+ASV4	Eukaryota	Opisthokonta	Metazoa	Mammalia	Mammalia	Vertebrata	Vertebrata	Chinchilla_lanigera	GBCC01000156.17.1875
+ASV5	Eukaryota	Stramenopiles	Incertae_Sedis	Incertae_Sedis	Incertae_Sedis	Incertae_Sedis	Blastocystis	Blastocystis_ST3	CEAR01040733.3888.5646
+ASV6	Eukaryota	Stramenopiles	Incertae_Sedis	Incertae_Sedis	Incertae_Sedis	Incertae_Sedis	Blastocystis	Blastocystis_ST3	CEAR01040733.3888.5646
+ASV7	Eukaryota	Archaeplastida	Chloroplastida	Phragmoplastophyta	Embryophyta	Malpighiales	Manihot	Manihot_esculenta_(cassava)	JPQF01129135.297.1940
+ASV8	Eukaryota	Archaeplastida	Chloroplastida	Phragmoplastophyta	Embryophyta	Musa	Musa	Musa_itinerans	LVTN01000080.350320.352096
+ASV9	Eukaryota	Opisthokonta	Metazoa	Mammalia	Mammalia	Vertebrata	Vertebrata	NA	NA
+ASV10	Eukaryota	Stramenopiles	Incertae_Sedis	Incertae_Sedis	Incertae_Sedis	Incertae_Sedis	Blastocystis	Blastocystis_ST2	GU992412.1.1694
