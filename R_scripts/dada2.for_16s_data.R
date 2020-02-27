@@ -112,8 +112,8 @@ rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.cut[[index]])
       REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnRs.cut[[index]]))
 
 # Forward and reverse fastq filenames have the format:
-cutFs <- sort(list.files(path.cut, pattern = "R1", full.names = TRUE))
-cutRs <- sort(list.files(path.cut, pattern = "R2", full.names = TRUE))
+cutFs <- sort(list.files(path.cut, pattern = "R1", full.names = TRUE)) #remember to change this so it matches ALL your file names!
+cutRs <- sort(list.files(path.cut, pattern = "R2", full.names = TRUE)) #remember to change this so it matches ALL your file names!
 
 ####filter and trim reads####
 filtFs <- file.path(path.cut, "filtered", basename(cutFs))
