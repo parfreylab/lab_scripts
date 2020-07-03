@@ -334,8 +334,8 @@ otu_table(ps.dada2_join)[otu <= 2] <- 0
 #to do this, just determine which rank the clade is captured by, and filter like so:
 #REQUIRED FOR 16s: Remove mitochondrial and chloroplast OTUs
 ps.dada2_join <- ps.dada2_join %>%
-  subset_taxa(Rank4 != "Chloroplast") %>% #you can chain as many of these subset_taxa calls as you like into this single command using the R pipe (%>%)
-  subset_taxa(Rank5 != "Mitochondria")
+  subset_taxa(Rank4 != "Chloroplast"| is.na(Rank4)) %>% #you can chain as many of these subset_taxa calls as you like into this single command using the R pipe (%>%)
+  subset_taxa(Rank5 != "Mitochondria"| is.na(Rank5))
 
 #with your filtered phyloseq object, you are now ready to move on to whatever statistical/diversity analyses you're planning to do. please see other R script guides in the lab github.
 #recommend saving the filtered dataset as well, if needed
