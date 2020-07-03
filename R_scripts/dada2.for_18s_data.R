@@ -344,8 +344,8 @@ otu_table(ps.dada2_join)[otu <= 2] <- 0
 #to do this, just determine which rank the clade is captured by, what the clade is called in your taxonomy table, and filter like so:
 # Remove mammalian and plant OTUs #this is just an example for a human gut study where we're not interested in anything but what's living in the gut
 ps.dada2_join <- ps.dada2_join %>%
-  subset_taxa(Rank5 != "Mammalia") %>% #you can chain as many of these subset_taxa calls as you like into this single command using the R pipe (%>%)
-  subset_taxa(Rank5 != "Embryophyta")
+  subset_taxa(Rank5 != "Mammalia" | is.na(Rank5)) %>% #you can chain as many of these subset_taxa calls as you like into this single command using the R pipe (%>%)
+  subset_taxa(Rank5 != "Embryophyta" | is.na(Rank5))
 
 #with your filtered phyloseq object, you are now ready to move on to whatever statistical/diversity analyses you're planning to do. please see other R script guides in the lab github.
 
