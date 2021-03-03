@@ -1,6 +1,6 @@
 ####code for getting your data (from MED/QIIME or dada2 pipeline) into a phyloseq object####
 #author: Evan Morien
-#last modified: October 30th, 2019
+#last modified: March 2nd, 2021
 
 #IMPORTANT NOTE: for purposes of clarity, there are example files for each of these methods of loading in data located in the lab git repo. they are stored in the subfolder "git:parfreylab/lab_scripts/example_files". these files have the format of the output files from dada2 or MED/QIIME pipelines.
 
@@ -24,12 +24,9 @@ taxa_16s <- taxa_16s[,-1] #remove column with the row names in it
 taxa_16s <- as.matrix(taxa_16s) #cast the object as a matrix
 
 #load sample data (from tab-delimited .txt)
-rawmetadata <- read_delim(file = file.path("/path/to/example_files", "mapping_file.example.txt"), # file.path() is used for cross-platform compatibility
-                          "\t", # the text file is tab delimited
-                          escape_double = FALSE, # the imported text file does not 'escape' quotation marks by wrapping them with more quotation marks
-                          trim_ws = TRUE) # remove leading and trailing spaces from character string entries
-#set row names to be sample IDs
-rownames(rawmetadata) <- rawmetadata$sampleID #change "SampleID" to whatever label your sample ID column has
+rawmetadata <- fread("mapping_file.example.txt", sep="\t", header=T, colClasses = c("sampleID"="character"), data.table=FALSE) #change "sampleID" to the header of the column where your sample names are stored
+row.names(rawmetadata) <- rawmetadata[,1] #set row names #change the index to the column with the row names in it
+rawmetadata <- rawmetadata[,-1] #remove column with the row names in it
 
 #make a note of which samples are present/absent in the metadata vs the sequence table (samples without a corresponding entry in both of these will not be included in the final phyloseq object, so correct any mislabeled samples now (the matching must be exact)
 notinmeta <- setdiff(row.names(seqtab.nosingletons.nochim), row.names(rawmetadata))
@@ -89,16 +86,16 @@ saveRDS(project_data, "my_project.full_dataset.phyloseq_format.RDS")
 
 #### OPTIONAL but GENERALLY RECOMMENDED UNLESS THERE IS A GOOD REASON NOT TO DO THIS: filtering the complete phyloseq dataset ####
 # Remove samples with less than N reads (N=100 in example. adjust per experiment.)
-project_data <- prune_samples(sample_sums(project_data) >= 100, ps.dada2_join) #i generally err on the side of caution for 18s experiments, where low read counts can reflect low diversity/low numbers of 18s organisms in the sample, while not strictly reflecting "sample failure". for 16s, a higher threshold is better. successful samples will have more than 1000 reads, but use a plot of the sorted sample sums to find what looks like an appropriate data-informed cutoff, if possible.
+project_data.filt <- prune_samples(sample_sums(project_data) >= 100, project_data) #i generally err on the side of caution for 18s experiments, where low read counts can reflect low diversity/low numbers of 18s organisms in the sample, while not strictly reflecting "sample failure". for 16s, a higher threshold is better. successful samples will have more than 1000 reads, but use a plot of the sorted sample sums to find what looks like an appropriate data-informed cutoff, if possible.
 
 # OPTIONAL: Remove OTUs with less than N total reads. (N = 50 for example. adjust per experiment)
-project_data <- prune_taxa(taxa_sums(project_data) >= 50, ps.dada2_join) #again, discretion is necessary here. in the dada2 pipeline, this is not necessary becasue a similar filter is applied already in the pipeline. for MED/QIIME, user's discretion.
+project_data.filt <- prune_taxa(taxa_sums(project_data) >= 50, project_data) #again, discretion is necessary here. in the dada2 pipeline, this is not necessary becasue a similar filter is applied already in the pipeline. for MED/QIIME, user's discretion.
 
 # Set aside unassigned taxa #with dada2, there may not be any unassigned taxa as dada2's RDP classifier usually ends up classifying everything. You may want to adjust this command to set aside ASVs that have no assignment beyond Rank1 instead of no assignment at Rank1.
-project_data.unassigned <- project_data %>%
+project_data.unassigned <- project_data.filt %>%
   subset_taxa(Rank1 == "Unassigned")
 # Remove unassigned taxa
-project_data <- project_data %>%
+project_data.filt <- project_data.filt %>%
   subset_taxa(Rank1 != "Unassigned")
 
 # zero out counts of 2 or less from OTU table
