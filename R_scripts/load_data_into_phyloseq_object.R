@@ -18,10 +18,10 @@ row.names(seqtab.nosingletons.nochim) <- seqtab.nosingletons.nochim[,1] #set row
 seqtab.nosingletons.nochim <- seqtab.nosingletons.nochim[,-1] #remove column with the row names in it
 seqtab.nosingletons.nochim <- as.matrix(seqtab.nosingletons.nochim) #cast the object as a matrix
 
-taxa_16s <- fread("taxonomy_table.example.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
-row.names(taxa_16s) <- taxa_16s[,1] #set row names
-taxa_16s <- taxa_16s[,-1] #remove column with the row names in it
-taxa_16s <- as.matrix(taxa_16s) #cast the object as a matrix
+taxatable <- fread("taxonomy_table.example.txt", sep="\t", header=T, colClasses = c("row_names"="character"), data.table=FALSE)
+row.names(taxatable) <- taxatable[,1] #set row names
+taxatable <- taxatable[,-1] #remove column with the row names in it
+taxatable <- as.matrix(taxatable) #cast the object as a matrix
 
 #load sample data (from tab-delimited .txt)
 rawmetadata <- fread("mapping_file.example.txt", sep="\t", header=T, colClasses = c("sampleID"="character"), data.table=FALSE) #change "sampleID" to the header of the column where your sample names are stored
@@ -35,7 +35,7 @@ notinraw <- setdiff(row.names(rawmetadata), row.names(seqtab.nosingletons.nochim
 #combine into phyloseq object
 project_data <- phyloseq(otu_table(seqtab.nosingletons.nochim, taxa_are_rows=FALSE), #taxa_are_rows is a parameter that sets whether phyloseq will look for taxa in the rows or columns of the input matrix. make sure it is set correctly.
                           sample_data(rawmetadata), 
-                          tax_table(taxa_16s))
+                          tax_table(taxatable))
 
 #### For data created with MED/QIIME pipeline (now obsolete): load in .biom file, metadata, and (optional) phylogenetic tree ####
 # REQUIRED: Read the raw data in .biom format, and store as a phylo_seq object called "rawdata"
