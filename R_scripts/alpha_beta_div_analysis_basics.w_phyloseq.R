@@ -1,6 +1,6 @@
 ####basic procedure for completing alpha and beta diversity analyses with a phyloseq object####
 #author: Evan Morien
-#last modified: October 30th, 2019
+#last modified: June 10th, 2021
 
 #IMPORTANT NOTE:
 # for both alpha and beta diversity analyses, data should be rarefied.
@@ -67,26 +67,13 @@ newpal <- qualpal(n = numcol, colorspace = "pretty")
 # 4. If you want to color only a few things in the plot, try using a more colourblind-friendly palette:
 cbPalette <- c("#E69F00", "#56B4E9", "#000000", "#009E73", "#CC79A7", "#0072B2", "#D55E00", "#FFFF00", "#999999", "#FF00FF", "#F0E442", "#FFFFFF", "#00FFFF")
 
-
 #### basic alpha div plot ####
-#chao1
-pdf("AlphaDiversity.chao1.factor.experiment_name.pdf", #name of file to print. can also include relative or absolute path before filename.
-    width = 16, height = 9)# define plot width and height. completely up to user.
-p <- plot_richness(project_data.rarefied, x="factor", color = "factor", measures=c("Chao1"))
-p + geom_boxplot(outlier.colour = "red", outlier.shape = 13) + 
-  facet_grid(~ FACTOR_2) + #use this to divide data into separate plots based on a factor/variable
-  theme(strip.background = element_rect(fill="white"), strip.placement = "bottom") +
-  theme(strip.text = element_text(colour = 'black')) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  scale_fill_manual(values=cbPalette) + scale_colour_manual(values=cbPalette) + 
-  labs(title="Alpha Diversity, Factor N, Chao1", x="Factor1 ~ Factor2", y="Richness/Alpha Diversity")
-dev.off()
-#### calculate alpha diversity and add it as a column in the metadata ####
+#### step1: calculate alpha diversity and add it as a column in the metadata ####
 project_data.chao1 <- estimate_richness(project_data.rarefied, split = TRUE, measures = c("Chao1")) #estimate richness
 sample_data(project_data.rarefied)$chao1 <- project_data.chao1$Chao1 #add to metadata (the rows are in the same order already)
 sample_data(project_data.rarefied)$chao1 <- as.numeric(sample_data(project_data.rarefied)$chao1)
 
-#### make basic plot with alpha diversity calculated separately ####
+#### step 2: use calculated alpha diversity to make basic plot with ggplot ####
 #this plot lets you customize things a bit more than the plot_richness function, if desired
 p <- ggplot(sample_data(project_data.rarefied), aes(x=FACTOR_1, y=chao1, color=FACTOR_3))
 p + geom_boxplot() + 
