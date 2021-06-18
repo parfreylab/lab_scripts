@@ -2,7 +2,7 @@
 ##General Framework for Making Taxa Summary Plots From a Phyloseq Object##
 ##########################################################################
 #author: Evan Morien
-#last modified: October 30th, 2019
+#last modified: June 18th, 2021
 
 #recommend using RStudio for this
 #NOTE: THIS SCRIPT IS MEANT TO BE CHANGED TO FIT YOUR DATA. PLEASE REMEMBER TO:
@@ -52,11 +52,11 @@ taxonomy_plot_obj <- taxonomy_plot_obj %>%
   psmelt() %>%                                          # Melt to long format
   arrange(Rank5)                                        # Arrange by the rank you are going to use in the plot
 
-# 2. make aesthetic changes to taxa rank labels, if desired:
+# 2. OPTIONAL: make aesthetic changes to taxa rank labels, if desired:
 taxonomy_plot_obj$Rank5 <- str_replace_all(taxonomy_plot_obj$Rank5, "__", "") # Remove underscores if your taxonomy strings have them. you'd do this for every rank in turn.
 taxonomy_plot_obj$Rank4 <- str_replace_all(taxonomy_plot_obj$RankN, "STRING", "REPLACEMENT") # Generalized example of string replacement
 
-# 3. order levels you are interested in the way you would like them plotted. many ways to do this.
+# 3. OPTIONAL: order levels you are interested in the way you would like them plotted. many ways to do this.
 taxonomy_plot_obj$factor_N <- factor(taxonomy_plot_obj$factor_N, levels = c("A", "B", "C", "1", "2", "3", "z", "y", "x", "w")) #method 1
 taxonomy_plot_obj$factor_N <- factor(taxonomy_plot_obj$factor_N, levels = sort(unique(factor(taxonomy_plot_obj$factor_N)))) #method 2
 mylevels <- c("A", "B", "C", "1", "2", "3", "z", "y", "x", "w") #method 3
@@ -81,9 +81,9 @@ myCustomPalette <- c("clade1" = "#333BFF",  "clade2"="#BBB3FF",  "clade3" = "#CC
 #this palette can be as large as you like, but the more colours you add, the harder it is to discriminate them visually. I recommend 20 colours MAXIMUM.
 
 #### Make Plots ####
-#example plot showing relative abundance of taxa through timepoints (coded as "experiment_day"), with individuals grouped together (coded as "rat_name"), and animals in the same cage grouped together as well (coded as "cage")
+#example plot showing relative abundance of taxa, with panels dividing samples according to two factors (FACTOR_1 and FACTOR_2)
 ggplot(taxonomy_plot_obj, aes(x = Sample, y = Abundance, fill = Rank5)) + 
-  facet_wrap(FACTOR_1~FACTOR_2, ncol=4, strip.position = "top", drop=TRUE, scales="free") + #OPTIONAL LINE: facet_wrap is the function for determining how plots are grouped within a multi-plot space
+  facet_wrap(FACTOR_1~FACTOR_2, strip.position = "top", drop=TRUE, scales="free") + #OPTIONAL LINE: facet_wrap is the function for determining how plots are grouped within a multi-plot space
   theme_bw() +
   theme(strip.background = element_rect(fill="white")) + #these "theme" settings determine how the facet grid looks on the plot
   theme(strip.text = element_text(colour = 'black')) +
@@ -112,7 +112,7 @@ ggplot(taxonomy_plot_obj, aes(x = Sample, y = Abundance, fill = Rank5)) +
   ggtitle("My Plot Title") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.spacing = unit(0, "lines"))
 
-#in this example the data is grouped in such a way that the relative abundances for each sample adds to the total height of the bar they are grouped into
+#in this example the data is grouped in such a way that the relative abundances for each sample adds to the total height of the bar they are grouped into (can be useful for visualizing each sample's proportional contribution to the total reads in a clade, when samples are combined by factor)
 ggplot(taxonomy_plot_obj, aes(x = FACTOR_N, y = Abundance, fill = Rank5)) + 
   facet_wrap(~ FACTOR_X, drop=TRUE, scales="free") +
   theme_bw() +
@@ -141,7 +141,7 @@ taxonomy_plot_obj <- project_data %>%
 
 #OPTIONAL, OFTEN RECOMMENDED: select top taxa
 # recommend roughly 20 taxa maximum, since it becomes more difficult to distinguish colours with more taxa than that
-topOTUs <- names(sort(taxa_sums(taxonomy_plot_obj), TRUE)[1:N]) #where N is the number of taxa you want to retain for plotting purposes
+topOTUs <- names(sort(taxa_sums(taxonomy_plot_obj), TRUE))[1:N] #where N is the number of taxa you want to retain for plotting purposes
 
 # REQUIRED: transform to relative abundance, melt to long format for plotting
 taxonomy_plot_obj <- taxonomy_plot_obj %>%
