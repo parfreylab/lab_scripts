@@ -1,6 +1,6 @@
 ####basic procedure for completing alpha and beta diversity analyses with a phyloseq object####
 #author: Evan Morien
-#last modified: June 10th, 2021
+#last modified: August 31st, 2021
 
 #IMPORTANT NOTE:
 # for both alpha and beta diversity analyses, data should be rarefied.
@@ -27,6 +27,8 @@ library(qualpalr)
 library(ggplot2)
 #load the vegan library
 library(vegan)
+#load ranacapa library for making rarefaction plots
+library(ranacapa)
 
 #### environment settings ####
 #set working directory
@@ -40,11 +42,7 @@ setwd("/path/to/working/directory/")
 plot(sort(sample_sums(project_data))) #looking at sample read counts
 summary(sample_sums(project_data))
 
-#found rarefaction curve function here: https://rdrr.io/github/gauravsk/ranacapa/src/R/ggrare.R #download this script
-#to use this you have to load the ggrare() function in from ggrare.R
-source("/path/to/ggrare.R") # load in ggrare function
-#Here are the usage instructions: https://rdrr.io/github/gauravsk/ranacapa/man/ggrare.html
-#and here is an example of usage in this workflow
+#making a rarefaction plot with ggrare() function
 p <- ggrare(project_data, step = 1000, color = "FACTOR_1", se = FALSE) #coloring is optional, factor must be selected
 # OPTIONAL: facet_wrap the plot to see differences according to different sample sites, types, etc.
 p + facet_wrap(~FACTOR_1 + FACTOR_2)
