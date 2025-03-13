@@ -53,7 +53,7 @@ which(sample_sums(project_data) < 2000)
 
 #### rarefy data ####
 set.seed(24) #you must set a numerical seed like this for reproducibility, but keep in mind that if your diversity results differ significantly after changing the seed, then there may be issues with your data.
-project_data.rarefied <- rarefy_even_depth(project_data, sample.size = min(sample_sums(project_data)))
+project_data.rarefied <- rarefy_even_depth(project_data, sample.size = min(sample_sums(project_data)), replace=TRUE)
 
 #### Create Colour Palettes ####
 # 1. identify the number of colors you need from the factor you want to plot by
