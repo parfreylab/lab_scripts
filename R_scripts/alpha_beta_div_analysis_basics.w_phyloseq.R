@@ -1,6 +1,6 @@
 ####basic procedure for completing alpha and beta diversity analyses with a phyloseq object####
 #author: Evan Morien
-#last modified: August 31st, 2021
+#last modified: Feb 5th, 2026
 
 #IMPORTANT NOTE:
 # for both alpha and beta diversity analyses, data should be rarefied.
@@ -38,13 +38,16 @@ setwd("/path/to/working/directory/")
 #if you don't have a phyloseq object ready, please see the script on the lab github that details loading data from various sources into phyloseq (load_data_into_phyloseq_object.R)
 #in the examples below, your complete, filtered phyloseq object is called "project_data"
 
+#load phyloseq object from .RDS
+project_data <- readRDS("my_phyloseq_object.RDS")
+
 #### plot rarefaction curves ####
 plot(sort(sample_sums(project_data))) #looking at sample read counts
 summary(sample_sums(project_data))
 
 #making a rarefaction plot with ggrare() function
 p <- ggrare(project_data, step = 1000, color = "FACTOR_1", se = FALSE) #coloring is optional, factor must be selected
-# OPTIONAL: facet_wrap the plot to see differences according to different sample sites, types, etc.
+# OPTIONAL: facet_wrap the plot to see differences according to different sample sites, types, etc. FACTOR_1, FACTOR_2, etc represent columns in your metadata, viewable through the sample_data() function from phyloseq package
 p + facet_wrap(~FACTOR_1 + FACTOR_2)
 #you can use the plot above to judge a rough cutoff for rarefaction. it is also possible to do this with QIIME's alpha rarefaction script if you have a .biom file
 
@@ -52,7 +55,7 @@ p + facet_wrap(~FACTOR_1 + FACTOR_2)
 which(sample_sums(project_data) < 2000)
 
 #### rarefy data ####
-set.seed(24) #you must set a numerical seed like this for reproducibility, but keep in mind that if your diversity results differ significantly after changing the seed, then there may be issues with your data.
+set.seed(24) #you must set a numerical seed like this for reproducibility, but keep in mind that if your diversity results differ significantly after changing the seed, then there may be issues with your data. there is no right number to choose, you can use any whole number, just record it for reproducibiity purposes
 project_data.rarefied <- rarefy_even_depth(project_data, sample.size = min(sample_sums(project_data)), replace=FALSE)
 
 #### Create Colour Palettes ####
@@ -82,7 +85,7 @@ p + geom_boxplot() +
 
 #### beta diversity (NMDS, PCoA, etc.) ####
 #do ordinations #be sure to use rarefied data for beta diversity analyses
-set.seed(24)
+set.seed(24) #same deal here as above w/r/t choosing a numeric seed for the ordination. specific number unimportant, always record for reproducibility
 NMDS.bray <- ordinate(
   physeq = project_data.rarefied, 
   method = "NMDS", 
@@ -91,7 +94,7 @@ NMDS.bray <- ordinate(
 
 #### making beta div plots ####
 #we get more plotting control if we don't use the phyloseq plotting functions for ordination plots, and instead add the results of the ordination to our existing metadata
-NMDS <- as.data.frame(sample_data(project_data))
+NMDS <- as.data.frame(sample_data(project_data.rarefied))
 bray <- as.data.frame(NMDS.bray$points)
 row.names(bray) == row.names(NMDS) #sanity check #tests as true
 NMDS$NMDS.bray1 <- bray$MDS1
