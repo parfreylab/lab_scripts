@@ -2,7 +2,7 @@
 ##General Framework for Making Taxa Summary Plots From a Phyloseq Object##
 ##########################################################################
 #author: Evan Morien
-#last modified: June 18th, 2021
+#last modified: Feb 5th, 2026
 
 #recommend using RStudio for this
 #NOTE: THIS SCRIPT IS MEANT TO BE CHANGED TO FIT YOUR DATA. PLEASE REMEMBER TO:
@@ -34,6 +34,9 @@ setwd("/path/to/working/directory")
 
 #### Load Required/Optional Files ####
 #please see the script "load_data_into_phyloseq_object.R" for instructions on loading and filtering your data using phyloseq. Use the phyloseq object you've filtered as input (called "project_data" in the example code) for the next section of this script.
+
+#how to load phyloseq object from phyloseq saved as .RDS
+project_data <- readRDS("my_phyloseq_object.RDS")
 
 #### Create Plotting Objects ####
 # 1. reshape data based on taxonomic level you are interested in, and select the top N taxa to show in the plot
