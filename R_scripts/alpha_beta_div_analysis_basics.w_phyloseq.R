@@ -43,6 +43,7 @@ project_data <- readRDS("my_phyloseq_object.RDS")
 
 #### plot rarefaction curves ####
 plot(sort(sample_sums(project_data))) #looking at sample read counts
+sort(sample_sums(project_data))
 summary(sample_sums(project_data))
 
 #making a rarefaction plot with ggrare() function
